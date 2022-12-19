@@ -1,9 +1,14 @@
 import {
-  Vesw,
   BribeFactory,
+  GaugeFactory,
+  GovernanceTreasury,
+  Ve,
+  VeDist,
+  Vesw,
   VeswFactory,
-  GaugeFactory, VeswMinter,
-  VeswRouter01, VeswVoter, GovernanceTreasury, Ve, VeDist
+  VeswMinter,
+  VeswRouter01,
+  VeswVoter
 } from "../../typechain";
 
 export class CoreAddresses {

@@ -28,6 +28,8 @@ export class Misc {
       return 'https://evm.evmos.dev/'
     } else if (net === 9001) {
       return 'https://evm.evmos.org/'
+    } else if (net === 51) {
+      return "https://explorer.apothem.network/"
     } else {
       throw Error('network not found ' + net);
     }

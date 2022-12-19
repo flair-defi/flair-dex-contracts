@@ -9,12 +9,16 @@ import {
   Controller,
   GaugeFactory,
   GovernanceTreasury,
+  Multicall2,
   SwapLibrary,
   Token,
   Ve,
   VeDist,
   Vesw,
-  VeswFactory, VeswMinter, VeswRouter01, VeswVoter
+  VeswFactory,
+  VeswMinter,
+  VeswRouter01,
+  VeswVoter
 } from "../../typechain";
 import {Misc} from "../Misc";
 import {CoreAddresses} from "./CoreAddresses";
@@ -106,6 +110,12 @@ export class Deploy {
       router: string,
   ) {
     return (await Deploy.deployContract(signer, 'SwapLibrary', router)) as SwapLibrary;
+  }
+
+  public static async deployMultiCall(
+      signer: SignerWithAddress
+  ) {
+    return (await Deploy.deployContract(signer, 'Multicall2')) as Multicall2;
   }
 
   public static async deployVe(signer: SignerWithAddress, token: string, controller: string) {
@@ -202,8 +212,9 @@ export class Deploy {
     const baseFactory = await Deploy.deployVeswFactory(signer, treasury.address);
     const router = await Deploy.deployVeswRouter01(signer, baseFactory.address, networkToken);
     const library = await Deploy.deployLibrary(signer, router.address);
+    const multicall = await Deploy.deployMultiCall(signer);
 
-    return [baseFactory, router, treasury, library];
+    return [baseFactory, router, treasury, library, multicall];
   }
 
   public static async deployVeswSystem(
@@ -222,6 +233,7 @@ export class Deploy {
     const gaugesFactory = await Deploy.deployGaugeFactory(signer);
     const bribesFactory = await Deploy.deployBribeFactory(signer);
 
+    await Misc.runAndWait(() => token.mint(signer.address,"100000000000000000000"));
 
     const veDist = await Deploy.deployVeDist(signer, ve.address);
     const voter = await Deploy.deployVeswVoter(signer, ve.address, baseFactory, gaugesFactory.address, bribesFactory.address);

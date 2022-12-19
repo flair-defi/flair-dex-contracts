@@ -20,7 +20,7 @@ import {Misc} from "../../../scripts/Misc";
 import {formatUnits, parseUnits} from "ethers/lib/utils";
 import {appendFileSync, writeFileSync} from "fs";
 import {BigNumber} from "ethers";
-import {MaticTestnetAddresses} from "../../../scripts/addresses/MaticTestnetAddresses";
+import {TestnetAddresses} from "../../../scripts/addresses/TestnetAddresses";
 
 const {expect} = chai;
 
@@ -57,8 +57,8 @@ describe("emission tests", function () {
 
     core = await Deploy.deployCore(
       owner,
-      MaticTestnetAddresses.WMATIC_TOKEN,
-      [MaticTestnetAddresses.WMATIC_TOKEN, ust.address, mim.address, dai.address],
+      TestnetAddresses.WXDC_TOKEN,
+      [TestnetAddresses.WXDC_TOKEN, ust.address, mim.address, dai.address],
       [owner.address, owner2.address],
       [amount100At18, amount100At18],
       amount100At18.mul(2)

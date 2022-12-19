@@ -1,6 +1,5 @@
 import {Deploy} from "../Deploy";
 import {ethers} from "hardhat";
-import {Verify} from "../../Verify";
 import {Misc} from "../../Misc";
 import {writeFileSync} from "fs";
 import {utils} from "ethers";

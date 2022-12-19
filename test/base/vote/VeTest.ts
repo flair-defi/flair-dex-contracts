@@ -13,7 +13,7 @@ import chai from "chai";
 import {Deploy} from "../../../scripts/deploy/Deploy";
 import {TimeUtils} from "../../TimeUtils";
 import {TestHelper} from "../../TestHelper";
-import {MaticTestnetAddresses} from "../../../scripts/addresses/MaticTestnetAddresses";
+import {TestnetAddresses} from "../../../scripts/addresses/TestnetAddresses";
 import {parseUnits} from "ethers/lib/utils";
 import {CoreAddresses} from "../../../scripts/deploy/CoreAddresses";
 import {Misc} from "../../../scripts/Misc";
@@ -53,8 +53,8 @@ describe("ve tests", function () {
 
     core = await Deploy.deployCore(
       owner,
-      MaticTestnetAddresses.WMATIC_TOKEN,
-      [MaticTestnetAddresses.WMATIC_TOKEN, ust.address, mim.address, dai.address],
+      TestnetAddresses.WXDC_TOKEN,
+      [TestnetAddresses.WXDC_TOKEN, ust.address, mim.address, dai.address],
       [owner.address, owner2.address],
       [parseUnits('100'), parseUnits('100')],
       parseUnits('200')
