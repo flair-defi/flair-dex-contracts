@@ -1,18 +1,16 @@
 import {Deploy} from "../Deploy";
 import {ethers} from "hardhat";
-import {Verify} from "../../Verify";
-import {Misc} from "../../Misc";
 import {BigNumber} from "ethers";
 import {TestnetAddresses} from "../../addresses/TestnetAddresses";
 import {writeFileSync} from "fs";
 
 
 const voterTokens = [
-  "0xA0b777d20C2eF1E3E46837Cfa66A48676B6eA7B1",
-  "0x96b8a833794Bfc0d50CfA6260f03e6582E632cD5",
-  "0x1269Bc25DC9457cc5c207A26798A3561F55514f6",
-  "0xcDCEDa3C39C3089E6211Fde0a3835531760F7C00",
-  "0x34C9DF2b2da601Ff5d9056206124f194Adaa8dC9",
+  "0xD0d692287EA897a11eBE5b011a006D5d7ffC43fC",
+  "0x49eBd4a0b8a4D498CA9b30Ee94111306cd71ac04",
+  "0x777c400c02cbb0899a0823f77aa7F3FaC376901b",
+  "0xc299e3c09458C092081D885f85f545F800FCb85b",
+  "0xbb5095446C2C47e3F9aBEBc39daaEF5b51265251",
   TestnetAddresses.WXDC_TOKEN
 ];
 
@@ -26,7 +24,7 @@ const claimantsAmounts = [
   BigNumber.from("237658800000000000000000")
 ];
 
-const FACTORY = '0x9197393d2Be4A686f337bF036238E7839f62e71c';
+const FACTORY = '0x346D87A4672A729E24B6a1b5Da5768730e84aae3';
 const WARMING = 0;
 
 async function main() {
@@ -71,16 +69,16 @@ async function main() {
   console.log(data);
   writeFileSync('tmp/core.txt', data);
 
-  await Misc.wait(50);
-
-  await Verify.verify(controller.address);
-  await Verify.verify(token.address);
-  await Verify.verify(gaugesFactory.address);
-  await Verify.verify(bribesFactory.address);
-  await Verify.verifyWithArgs(ve.address, [token.address, controller.address]);
-  await Verify.verifyWithArgs(veDist.address, [ve.address]);
-  await Verify.verifyWithArgs(voter.address, [ve.address, FACTORY, gaugesFactory.address, bribesFactory.address]);
-  await Verify.verifyWithArgs(minter.address, [ve.address, controller.address, WARMING]);
+  // await Misc.wait(50);
+  //
+  // await Verify.verify(controller.address);
+  // await Verify.verify(token.address);
+  // await Verify.verify(gaugesFactory.address);
+  // await Verify.verify(bribesFactory.address);
+  // await Verify.verifyWithArgs(ve.address, [token.address, controller.address]);
+  // await Verify.verifyWithArgs(veDist.address, [ve.address]);
+  // await Verify.verifyWithArgs(voter.address, [ve.address, FACTORY, gaugesFactory.address, bribesFactory.address]);
+  // await Verify.verifyWithArgs(minter.address, [ve.address, controller.address, WARMING]);
 
 }
 

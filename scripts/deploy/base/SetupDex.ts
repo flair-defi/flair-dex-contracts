@@ -20,11 +20,11 @@ async function main() {
   console.log(data);
   writeFileSync('tmp/dex.txt', data);
 
-  await Misc.wait(5);
-
-  await Verify.verify(core[2].address);
-  await Verify.verifyWithArgs(core[0].address, [core[2].address]);
-  await Verify.verifyWithArgs(core[1].address, [core[0].address, TestnetAddresses.WXDC_TOKEN]);
+  // await Misc.wait(5);
+  //
+  // await Verify.verify(core[2].address);
+  // await Verify.verifyWithArgs(core[0].address, [core[2].address]);
+  // await Verify.verifyWithArgs(core[1].address, [core[0].address, TestnetAddresses.WXDC_TOKEN]);
 
 }
 

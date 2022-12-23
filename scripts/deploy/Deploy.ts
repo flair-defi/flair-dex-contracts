@@ -233,7 +233,7 @@ export class Deploy {
     const gaugesFactory = await Deploy.deployGaugeFactory(signer);
     const bribesFactory = await Deploy.deployBribeFactory(signer);
 
-    await Misc.runAndWait(() => token.mint(signer.address,"100000000000000000000"));
+    await Misc.runAndWait(() => token.mint(signer.address,"1000000000000000000000"));
 
     const veDist = await Deploy.deployVeDist(signer, ve.address);
     const voter = await Deploy.deployVeswVoter(signer, ve.address, baseFactory, gaugesFactory.address, bribesFactory.address);
