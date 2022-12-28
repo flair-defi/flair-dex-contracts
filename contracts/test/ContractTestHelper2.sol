@@ -2,7 +2,7 @@
 
 pragma solidity ^0.8.13;
 
-import "../base/core/VeswPair.sol";
+import "../base/core/FldxPair.sol";
 import "../base/vote/Ve.sol";
 
 contract ContractTestHelper2 is IERC721Receiver {

@@ -11,7 +11,7 @@ const voterTokens = [
   "0x777c400c02cbb0899a0823f77aa7F3FaC376901b",
   "0xc299e3c09458C092081D885f85f545F800FCb85b",
   "0xbb5095446C2C47e3F9aBEBc39daaEF5b51265251",
-  TestnetAddresses.WXDC_TOKEN
+  TestnetAddresses.FLR_TOKEN
 ];
 
 const claimants = [
@@ -45,9 +45,9 @@ async function main() {
     veDist,
     voter,
     minter,
-  ] = await Deploy.deployVeswSystem(
+  ] = await Deploy.deployFldxSystem(
     signer,
-    TestnetAddresses.WXDC_TOKEN,
+    TestnetAddresses.FLR_TOKEN,
     voterTokens,
     claimants,
     claimantsAmounts,

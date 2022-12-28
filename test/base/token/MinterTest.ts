@@ -5,7 +5,7 @@ import {Deploy} from "../../../scripts/deploy/Deploy";
 import {TimeUtils} from "../../TimeUtils";
 import {BigNumber, utils} from "ethers";
 import {CoreAddresses} from "../../../scripts/deploy/CoreAddresses";
-import {Controller, VeswPair, Token} from "../../../typechain";
+import {Controller, FldxPair, Token} from "../../../typechain";
 import {TestHelper} from "../../TestHelper";
 import {parseUnits} from "ethers/lib/utils";
 import {Misc} from "../../../scripts/Misc";
@@ -24,7 +24,7 @@ describe("minter tests", function () {
   let ust: Token;
   let mim: Token;
   let dai: Token;
-  let pair: VeswPair;
+  let pair: FldxPair;
   // let gauge: Gauge;
 
 
@@ -100,14 +100,14 @@ describe("minter tests", function () {
     const treasury = await Deploy.deployGovernanceTreasury(owner);
     const gaugesFactory = await Deploy.deployGaugeFactory(owner);
     const bribesFactory = await Deploy.deployBribeFactory(owner);
-    const baseFactory = await Deploy.deployVeswFactory(owner, treasury.address);
+    const baseFactory = await Deploy.deployFldxFactory(owner, treasury.address);
     const token = await Deploy.deployContract(owner, 'Token', 'VE', 'VE', 18, owner.address) as Token;
     const ve = await Deploy.deployVe(owner, token.address, controller.address);
     const veDist = await Deploy.deployVeDist(owner, ve.address);
-    const voter = await Deploy.deployVeswVoter(owner, ve.address, baseFactory.address, gaugesFactory.address, bribesFactory.address);
+    const voter = await Deploy.deployFldxVoter(owner, ve.address, baseFactory.address, gaugesFactory.address, bribesFactory.address);
     await controller.setVeDist(veDist.address)
     await controller.setVoter(voter.address)
-    const minter = await Deploy.deployVeswMinter(owner, ve.address, controller.address, 1);
+    const minter = await Deploy.deployFldxMinter(owner, ve.address, controller.address, 1);
     console.log((await minter.activePeriod()).toString());
     await expect(minter.initialize([owner.address], [1], 2)).revertedWith('Wrong totalAmount')
   });

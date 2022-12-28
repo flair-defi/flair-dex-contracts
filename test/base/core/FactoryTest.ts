@@ -1,4 +1,4 @@
-import {Token, VeswFactory, VeswPair__factory} from "../../../typechain";
+import {Token, FldxFactory, FldxPair__factory} from "../../../typechain";
 import {SignerWithAddress} from "@nomiclabs/hardhat-ethers/signers";
 import {ethers} from "hardhat";
 import chai from "chai";
@@ -15,7 +15,7 @@ describe("factory tests", function () {
 
   let owner: SignerWithAddress;
   let owner2: SignerWithAddress;
-  let factory: VeswFactory;
+  let factory: FldxFactory;
   let wmatic: Token;
   let usdc: Token;
 
@@ -25,7 +25,7 @@ describe("factory tests", function () {
     [owner, owner2] = await ethers.getSigners();
     wmatic = await Deploy.deployContract(owner, 'Token', 'WMATIC', 'WMATIC', 18, owner.address) as Token;
     usdc = await Deploy.deployContract(owner, 'Token', 'USDC', 'USDC', 6, owner.address) as Token;
-    factory = await Deploy.deployVeswFactory(owner, owner.address);
+    factory = await Deploy.deployFldxFactory(owner, owner.address);
   });
 
   after(async function () {
@@ -77,7 +77,7 @@ describe("factory tests", function () {
     await factory.createPair(wmatic.address, usdc.address, true);
     await expect(factory.createPair(wmatic.address, usdc.address, true)).revertedWith('PAIR_EXISTS');
     const pairAdr = await factory.getPair(wmatic.address, usdc.address, true);
-    const pair = VeswPair__factory.connect(pairAdr, owner);
+    const pair = FldxPair__factory.connect(pairAdr, owner);
     expect(await pair.factory()).eq(factory.address);
     expect(await pair.treasury()).eq(owner.address);
     expect(await pair.fees()).not.eq(Misc.ZERO_ADDRESS);

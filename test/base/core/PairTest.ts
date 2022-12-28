@@ -1,7 +1,7 @@
 import {
   ContractTestHelper,
   IERC20__factory,
-  Token, Vesw, VeswFactory, VeswPair, VeswRouter01
+  Token, Fldx, FldxFactory, FldxPair, FldxRouter01
 } from "../../../typechain";
 import {SignerWithAddress} from "@nomiclabs/hardhat-ethers/signers";
 import {ethers} from "hardhat";
@@ -23,8 +23,8 @@ describe("pair tests", function () {
   let owner: SignerWithAddress;
   let owner2: SignerWithAddress;
   let owner3: SignerWithAddress;
-  let factory: VeswFactory;
-  let router: VeswRouter01;
+  let factory: FldxFactory;
+  let router: FldxRouter01;
   let testHelper: ContractTestHelper;
 
   let ust: Token;
@@ -32,16 +32,16 @@ describe("pair tests", function () {
   let dai: Token;
   let wmatic: Token;
 
-  let pair: VeswPair;
-  let pair2: VeswPair;
+  let pair: FldxPair;
+  let pair2: FldxPair;
 
   before(async function () {
     snapshotBefore = await TimeUtils.snapshot();
     [owner, owner2, owner3] = await ethers.getSigners();
     wmatic = await Deploy.deployContract(owner, 'Token', 'WMATIC', 'WMATIC', 18, owner.address) as Token;
     await wmatic.mint(owner.address, parseUnits('10000'))
-    factory = await Deploy.deployVeswFactory(owner, owner.address);
-    router = await Deploy.deployVeswRouter01(owner, factory.address, wmatic.address);
+    factory = await Deploy.deployFldxFactory(owner, owner.address);
+    router = await Deploy.deployFldxRouter01(owner, factory.address, wmatic.address);
 
     [ust, mim, dai] = await TestHelper.createMockTokensAndMint(owner);
     await ust.transfer(owner2.address, utils.parseUnits('100', 6));
@@ -206,11 +206,11 @@ describe("pair tests", function () {
   });
 
   it("insufficient liquidity minted revert", async function () {
-    await expect(pair2.mint(owner.address)).revertedWith('VeswPair: INSUFFICIENT_LIQUIDITY_MINTED');
+    await expect(pair2.mint(owner.address)).revertedWith('FldxPair: INSUFFICIENT_LIQUIDITY_MINTED');
   });
 
   it("insufficient liquidity burned revert", async function () {
-    await expect(pair2.burn(owner.address)).revertedWith('VeswPair: INSUFFICIENT_LIQUIDITY_BURNED');
+    await expect(pair2.burn(owner.address)).revertedWith('FldxPair: INSUFFICIENT_LIQUIDITY_BURNED');
   });
 
   it("swap on pause test", async function () {
@@ -219,15 +219,15 @@ describe("pair tests", function () {
   });
 
   it("insufficient output amount", async function () {
-    await expect(pair2.swap(0, 0, owner.address, '0x')).revertedWith('VeswPair: INSUFFICIENT_OUTPUT_AMOUNT');
+    await expect(pair2.swap(0, 0, owner.address, '0x')).revertedWith('FldxPair: INSUFFICIENT_OUTPUT_AMOUNT');
   });
 
   it("insufficient liquidity", async function () {
-    await expect(pair2.swap(Misc.MAX_UINT, Misc.MAX_UINT, owner.address, '0x')).revertedWith('VeswPair: INSUFFICIENT_LIQUIDITY');
+    await expect(pair2.swap(Misc.MAX_UINT, Misc.MAX_UINT, owner.address, '0x')).revertedWith('FldxPair: INSUFFICIENT_LIQUIDITY');
   });
 
   it("invalid to", async function () {
-    await expect(pair2.swap(1, 1, wmatic.address, '0x')).revertedWith('VeswPair: INVALID_TO');
+    await expect(pair2.swap(1, 1, wmatic.address, '0x')).revertedWith('FldxPair: INVALID_TO');
   });
 
   it("flash swap", async function () {
@@ -257,12 +257,12 @@ describe("pair tests", function () {
   });
 
   it("insufficient input amount", async function () {
-    await expect(pair2.swap(10000000, 1000000, owner.address, '0x')).revertedWith('VeswPair: INSUFFICIENT_INPUT_AMOUNT');
+    await expect(pair2.swap(10000000, 1000000, owner.address, '0x')).revertedWith('FldxPair: INSUFFICIENT_INPUT_AMOUNT');
   });
 
   it("k revert", async function () {
     await mim.transfer(pair2.address, 1);
-    await expect(pair2.swap(10000000, 1000000, owner.address, '0x')).revertedWith('VeswPair: K');
+    await expect(pair2.swap(10000000, 1000000, owner.address, '0x')).revertedWith('FldxPair: K');
   });
 
   it("approve with zero adr revert", async function () {
@@ -397,7 +397,7 @@ describe("pair tests", function () {
 
 });
 
-async function checkTwap(pair: VeswPair, tokenIn: string, diff: BigNumber) {
+async function checkTwap(pair: FldxPair, tokenIn: string, diff: BigNumber) {
   const amount = parseUnits('1');
   const twapPrice = await pair.quote(tokenIn, amount, 10)
   const curPrice = await pair.getAmountOut(amount, tokenIn);
@@ -412,8 +412,8 @@ async function checkTwap(pair: VeswPair, tokenIn: string, diff: BigNumber) {
 
 async function swapInLoop(
   owner: SignerWithAddress,
-  factory: VeswFactory,
-  router: VeswRouter01,
+  factory: FldxFactory,
+  router: FldxRouter01,
   loops: number,
 ) {
   const amount = parseUnits('1');
@@ -450,8 +450,8 @@ async function swapInLoop(
 
 async function prices(
   owner: SignerWithAddress,
-  factory: VeswFactory,
-  router: VeswRouter01,
+  factory: FldxFactory,
+  router: FldxRouter01,
   stable = true,
 ) {
   const tokenA = await Deploy.deployContract(owner, 'Token', 'UST', 'UST', 18, owner.address) as Token;

@@ -14,7 +14,7 @@ import "../../interface/IController.sol";
 
 /// @title Codifies the minting rules as per ve(3,3),
 ///        abstracted from the token to support any token that allows minting
-contract VeswMinter is IMinter {
+contract FldxMinter is IMinter {
   using SafeERC20 for IERC20;
 
   /// @dev Allows minting once per week (reset every Thursday 00:00 UTC)

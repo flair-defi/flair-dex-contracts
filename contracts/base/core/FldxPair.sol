@@ -14,7 +14,7 @@ import "../../lib/SafeERC20.sol";
 import "../Reentrancy.sol";
 
 // The base pair of pools, either stable or volatile
-contract VeswPair is IERC20, IPair, Reentrancy {
+contract FldxPair is IERC20, IPair, Reentrancy {
   using SafeERC20 for IERC20;
 
   string public name;
@@ -358,7 +358,7 @@ contract VeswPair is IERC20, IPair, Reentrancy {
     } else {
       liquidity = Math.min(_amount0 * _totalSupply / _reserve0, _amount1 * _totalSupply / _reserve1);
     }
-    require(liquidity > 0, 'VeswPair: INSUFFICIENT_LIQUIDITY_MINTED');
+    require(liquidity > 0, 'FldxPair: INSUFFICIENT_LIQUIDITY_MINTED');
     _mint(to, liquidity);
 
     _update(_balance0, _balance1, _reserve0, _reserve1);
@@ -380,7 +380,7 @@ contract VeswPair is IERC20, IPair, Reentrancy {
     amount0 = _liquidity * _balance0 / _totalSupply;
     // using balances ensures pro-rata distribution
     amount1 = _liquidity * _balance1 / _totalSupply;
-    require(amount0 > 0 && amount1 > 0, 'VeswPair: INSUFFICIENT_LIQUIDITY_BURNED');
+    require(amount0 > 0 && amount1 > 0, 'FldxPair: INSUFFICIENT_LIQUIDITY_BURNED');
     _burn(address(this), _liquidity);
     IERC20(_token0).safeTransfer(to, amount0);
     IERC20(_token1).safeTransfer(to, amount1);
@@ -393,15 +393,15 @@ contract VeswPair is IERC20, IPair, Reentrancy {
 
   /// @dev This low-level function should be called from a contract which performs important safety checks
   function swap(uint amount0Out, uint amount1Out, address to, bytes calldata data) external override lock {
-    require(!IFactory(factory).isPaused(), "VeswPair: PAUSE");
-    require(amount0Out > 0 || amount1Out > 0, 'VeswPair: INSUFFICIENT_OUTPUT_AMOUNT');
+    require(!IFactory(factory).isPaused(), "FldxPair: PAUSE");
+    require(amount0Out > 0 || amount1Out > 0, 'FldxPair: INSUFFICIENT_OUTPUT_AMOUNT');
     (uint _reserve0, uint _reserve1) = (reserve0, reserve1);
-    require(amount0Out < _reserve0 && amount1Out < _reserve1, 'VeswPair: INSUFFICIENT_LIQUIDITY');
+    require(amount0Out < _reserve0 && amount1Out < _reserve1, 'FldxPair: INSUFFICIENT_LIQUIDITY');
     uint _balance0;
     uint _balance1;
     {// scope for _token{0,1}, avoids stack too deep errors
       (address _token0, address _token1) = (token0, token1);
-      require(to != _token0 && to != _token1, 'VeswPair: INVALID_TO');
+      require(to != _token0 && to != _token1, 'FldxPair: INVALID_TO');
       // optimistically transfer tokens
       if (amount0Out > 0) IERC20(_token0).safeTransfer(to, amount0Out);
       // optimistically transfer tokens
@@ -413,7 +413,7 @@ contract VeswPair is IERC20, IPair, Reentrancy {
     }
     uint amount0In = _balance0 > _reserve0 - amount0Out ? _balance0 - (_reserve0 - amount0Out) : 0;
     uint amount1In = _balance1 > _reserve1 - amount1Out ? _balance1 - (_reserve1 - amount1Out) : 0;
-    require(amount0In > 0 || amount1In > 0, 'VeswPair: INSUFFICIENT_INPUT_AMOUNT');
+    require(amount0In > 0 || amount1In > 0, 'FldxPair: INSUFFICIENT_INPUT_AMOUNT');
     {// scope for reserve{0,1}Adjusted, avoids stack too deep errors
       (address _token0, address _token1) = (token0, token1);
       // accrue fees for token0 and move them out of pool
@@ -426,7 +426,7 @@ contract VeswPair is IERC20, IPair, Reentrancy {
       _balance0 = IERC20(_token0).balanceOf(address(this));
       _balance1 = IERC20(_token1).balanceOf(address(this));
       // The curve, either x3y+y3x for stable pools, or x*y for volatile pools
-      require(_k(_balance0, _balance1) >= _k(_reserve0, _reserve1), 'VeswPair: K');
+      require(_k(_balance0, _balance1) >= _k(_reserve0, _reserve1), 'FldxPair: K');
     }
 
     _update(_balance0, _balance1, _reserve0, _reserve1);
@@ -532,7 +532,7 @@ contract VeswPair is IERC20, IPair, Reentrancy {
   }
 
   function approve(address spender, uint amount) external override returns (bool) {
-    require(spender != address(0), "VeswPair: Approve to the zero address");
+    require(spender != address(0), "FldxPair: Approve to the zero address");
     allowance[msg.sender][spender] = amount;
 
     emit Approval(msg.sender, spender, amount);
@@ -548,7 +548,7 @@ contract VeswPair is IERC20, IPair, Reentrancy {
     bytes32 r,
     bytes32 s
   ) external override {
-    require(deadline >= block.timestamp, 'VeswPair: EXPIRED');
+    require(deadline >= block.timestamp, 'FldxPair: EXPIRED');
     bytes32 digest = keccak256(
       abi.encodePacked(
         '\x19\x01',
@@ -557,7 +557,7 @@ contract VeswPair is IERC20, IPair, Reentrancy {
       )
     );
     address recoveredAddress = ecrecover(digest, v, r, s);
-    require(recoveredAddress != address(0) && recoveredAddress == owner, 'VeswPair: INVALID_SIGNATURE');
+    require(recoveredAddress != address(0) && recoveredAddress == owner, 'FldxPair: INVALID_SIGNATURE');
     allowance[owner][spender] = value;
 
     emit Approval(owner, spender, value);
@@ -573,7 +573,7 @@ contract VeswPair is IERC20, IPair, Reentrancy {
     uint spenderAllowance = allowance[src][spender];
 
     if (spender != src && spenderAllowance != type(uint).max) {
-      require(spenderAllowance >= amount, "VeswPair: Insufficient allowance");
+      require(spenderAllowance >= amount, "FldxPair: Insufficient allowance");
     unchecked {
       uint newAllowance = spenderAllowance - amount;
       allowance[src][spender] = newAllowance;
@@ -586,7 +586,7 @@ contract VeswPair is IERC20, IPair, Reentrancy {
   }
 
   function _transferTokens(address src, address dst, uint amount) internal {
-    require(dst != address(0), "VeswPair: Transfer to the zero address");
+    require(dst != address(0), "FldxPair: Transfer to the zero address");
 
     // update fee position for src
     _updateFor(src);
@@ -594,7 +594,7 @@ contract VeswPair is IERC20, IPair, Reentrancy {
     _updateFor(dst);
 
     uint srcBalance = balanceOf[src];
-    require(srcBalance >= amount, "VeswPair: Transfer amount exceeds balance");
+    require(srcBalance >= amount, "FldxPair: Transfer amount exceeds balance");
   unchecked {
     balanceOf[src] = srcBalance - amount;
   }

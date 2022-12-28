@@ -1,6 +1,6 @@
 import {
-  VeswMinter__factory,
-  VeswPair,
+  FldxMinter__factory,
+  FldxPair,
   Bribe,
   Bribe__factory,
   Gauge,
@@ -40,7 +40,7 @@ describe("emission tests", function () {
   let ust: Token;
   let mim: Token;
   let dai: Token;
-  let mimUstPair: VeswPair;
+  let mimUstPair: FldxPair;
 
   let gaugeMimUst: Gauge;
 
@@ -57,8 +57,8 @@ describe("emission tests", function () {
 
     core = await Deploy.deployCore(
       owner,
-      TestnetAddresses.WXDC_TOKEN,
-      [TestnetAddresses.WXDC_TOKEN, ust.address, mim.address, dai.address],
+      TestnetAddresses.FLR_TOKEN,
+      [TestnetAddresses.FLR_TOKEN, ust.address, mim.address, dai.address],
       [owner.address, owner2.address],
       [amount100At18, amount100At18],
       amount100At18.mul(2)
@@ -145,7 +145,7 @@ describe("emission tests", function () {
     await core.minter.updatePeriod();
 
     expect(await core.token.balanceOf(core.minter.address)).is.eq(0);
-    // not exact amount coz veVESW balance fluctuation during time
+    // not exact amount coz veFLDX balance fluctuation during time
     TestHelper.closer(await core.token.balanceOf(core.veDist.address), parseUnits('188000'), parseUnits('3000'));
     TestHelper.closer(await core.token.balanceOf(core.voter.address), parseUnits('2000000'), parseUnits('0'));
   });
@@ -159,7 +159,7 @@ describe("emission tests", function () {
     await core.minter.updatePeriod();
 
     expect(await core.token.balanceOf(core.minter.address)).is.eq(0);
-    // not exact amount coz veVESW balance fluctuation during time
+    // not exact amount coz veFLDX balance fluctuation during time
     const veDistBal = await core.token.balanceOf(core.veDist.address);
     const voterBal = await core.token.balanceOf(core.voter.address);
     TestHelper.closer(veDistBal, parseUnits('196000'), parseUnits('3000'));
@@ -170,7 +170,7 @@ describe("emission tests", function () {
     await core.minter.updatePeriod();
 
     expect(await core.token.balanceOf(core.minter.address)).is.eq(0);
-    // not exact amount coz veVESW balance fluctuation during time
+    // not exact amount coz veFLDX balance fluctuation during time
     TestHelper.closer((await core.token.balanceOf(core.veDist.address)).sub(veDistBal), parseUnits('150'), parseUnits('50'));
     TestHelper.closer((await core.token.balanceOf(core.voter.address)).sub(voterBal), parseUnits('17000000'), parseUnits('1000000'));
   });
@@ -186,7 +186,7 @@ describe("emission tests", function () {
 
     // minter without enough token should distribute everything to veDist and voter
     expect(await core.token.balanceOf(core.minter.address)).is.eq(0);
-    // not exact amount coz veVESW balance fluctuation during time
+    // not exact amount coz veFLDX balance fluctuation during time
     TestHelper.closer(await core.token.balanceOf(core.veDist.address), parseUnits('196000'), parseUnits('10000'));
     TestHelper.closer(await core.token.balanceOf(core.voter.address), parseUnits('2000000'), parseUnits('10000'));
 
@@ -195,18 +195,18 @@ describe("emission tests", function () {
     const toClaim = await core.veDist.claimable(1);
     expect(toClaim).is.above(parseUnits('30000'));
 
-    expect(await core.token.balanceOf(owner.address)).is.eq(0, "before the first update we should have 0 VESW");
+    expect(await core.token.balanceOf(owner.address)).is.eq(0, "before the first update we should have 0 FLDX");
     const veBalance = (await core.ve.locked(1)).amount;
 
     await core.veDist.claim(1);
 
-    // claimed VESW will be deposited to veVESW
+    // claimed FLDX will be deposited to veFLDX
     TestHelper.closer((await core.ve.locked(1)).amount, toClaim.add(veBalance), parseUnits('10000'));
 
     // ----------- CHECK CLAIM GAUGE ----------
     expect(await core.token.balanceOf(gaugeMimUst.address)).is.eq(0);
 
-    // distribute VESW to all gauges
+    // distribute FLDX to all gauges
     await core.voter.distributeAll();
 
     // voter has some dust after distribution
@@ -288,12 +288,12 @@ async function emissionLoop(
     const tx = await gauge.getReward(owner.address, [core.token.address]);
     const receipt = await tx.wait(1);
     // tslint:disable-next-line
-    const log = receipt.events?.find((l: any) => l.topics[0] === VeswMinter__factory.createInterface().getEventTopic('Mint'));
+    const log = receipt.events?.find((l: any) => l.topics[0] === FldxMinter__factory.createInterface().getEventTopic('Mint'));
     let weekly = '-1';
     let growth = '-1';
     if (log) {
-      weekly = formatUnits(VeswMinter__factory.createInterface().parseLog(log).args[1]);
-      growth = formatUnits(VeswMinter__factory.createInterface().parseLog(log).args[2]);
+      weekly = formatUnits(FldxMinter__factory.createInterface().parseLog(log).args[1]);
+      growth = formatUnits(FldxMinter__factory.createInterface().parseLog(log).args[2]);
     }
 
     const tokenBalance = await core.token.balanceOf(owner.address);

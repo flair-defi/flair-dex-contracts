@@ -1,6 +1,6 @@
 import {
   Token,
-  TokenWithFee, VeswFactory, VeswPair__factory, VeswRouter01
+  TokenWithFee, FldxFactory, FldxPair__factory, FldxRouter01
 } from "../../../typechain";
 import {SignerWithAddress} from "@nomiclabs/hardhat-ethers/signers";
 import {ethers} from "hardhat";
@@ -21,8 +21,8 @@ describe("router tests", function () {
 
   let owner: SignerWithAddress;
   let owner2: SignerWithAddress;
-  let factory: VeswFactory;
-  let router: VeswRouter01;
+  let factory: FldxFactory;
+  let router: FldxRouter01;
 
   let wmatic: Token;
   let ust: Token;
@@ -36,8 +36,8 @@ describe("router tests", function () {
     [owner, owner2] = await ethers.getSigners();
     wmatic = await Deploy.deployContract(owner, 'Token', 'WMATIC', 'WMATIC', 18, owner.address) as Token;
     await wmatic.mint(owner.address, parseUnits('1000'));
-    factory = await Deploy.deployVeswFactory(owner, owner.address);
-    router = await Deploy.deployVeswRouter01(owner, factory.address, wmatic.address);
+    factory = await Deploy.deployFldxFactory(owner, owner.address);
+    router = await Deploy.deployFldxRouter01(owner, factory.address, wmatic.address);
 
     [ust, mim, dai] = await TestHelper.createMockTokensAndMint(owner);
     await ust.transfer(owner2.address, utils.parseUnits('100', 6));
@@ -151,7 +151,7 @@ describe("router tests", function () {
 
     const pairAdr = await factory.getPair(mim.address, wmatic.address, true);
 
-    await VeswPair__factory.connect(pairAdr, owner).approve(router.address, parseUnits('1111'));
+    await FldxPair__factory.connect(pairAdr, owner).approve(router.address, parseUnits('1111'));
     await router.removeLiquidityMATIC(
       mim.address,
       true,
@@ -178,7 +178,7 @@ describe("router tests", function () {
     );
 
     const pairAdr = await factory.getPair(mim.address, wmatic.address, true);
-    const pair = VeswPair__factory.connect(pairAdr, owner);
+    const pair = FldxPair__factory.connect(pairAdr, owner);
 
     const {
       v,
@@ -213,7 +213,7 @@ describe("router tests", function () {
     );
 
     const pairAdr = await factory.getPair(mim.address, wmatic.address, true);
-    const pair = VeswPair__factory.connect(pairAdr, owner);
+    const pair = FldxPair__factory.connect(pairAdr, owner);
 
     const {
       v,
@@ -355,7 +355,7 @@ describe("router tests", function () {
     );
 
     const pairAdr = await factory.getPair(tokenWithFee.address, wmatic.address, true);
-    const pair = VeswPair__factory.connect(pairAdr, owner);
+    const pair = FldxPair__factory.connect(pairAdr, owner);
     const pairBal = await pair.balanceOf(owner.address);
 
     const {
@@ -514,21 +514,21 @@ describe("router tests", function () {
       owner.address,
       1,
       {value: parseUnits('10')}
-    )).revertedWith('VeswRouter: EXPIRED');
+    )).revertedWith('FldxRouter: EXPIRED');
   });
 
   it("sort tokens identical address", async function () {
     await expect(router.sortTokens(
       mim.address,
       mim.address,
-    )).revertedWith('VeswRouter: IDENTICAL_ADDRESSES');
+    )).revertedWith('FldxRouter: IDENTICAL_ADDRESSES');
   });
 
   it("sort tokens zero address", async function () {
     await expect(router.sortTokens(
       mim.address,
       Misc.ZERO_ADDRESS,
-    )).revertedWith('VeswRouter: ZERO_ADDRESS');
+    )).revertedWith('FldxRouter: ZERO_ADDRESS');
   });
 
   it("getAmountOut for not exist pair", async function () {
@@ -540,7 +540,7 @@ describe("router tests", function () {
   });
 
   it("receive matic not from wmatic reject", async function () {
-    await expect(owner.sendTransaction({value: 1, to: router.address})).revertedWith("VeswRouter: NOT_WMATIC");
+    await expect(owner.sendTransaction({value: 1, to: router.address})).revertedWith("FldxRouter: NOT_WMATIC");
   });
 
   it("getReserves", async function () {
@@ -558,15 +558,15 @@ describe("router tests", function () {
   });
 
   it("getAmountsOut wrong path", async function () {
-    await expect(router.getAmountsOut(0, [])).revertedWith('VeswRouter: INVALID_PATH');
+    await expect(router.getAmountsOut(0, [])).revertedWith('FldxRouter: INVALID_PATH');
   });
 
   it("quoteLiquidity zero amount", async function () {
-    await expect(router.quoteLiquidity(0, 0, 0)).revertedWith('VeswRouter: INSUFFICIENT_AMOUNT');
+    await expect(router.quoteLiquidity(0, 0, 0)).revertedWith('FldxRouter: INSUFFICIENT_AMOUNT');
   });
 
   it("quoteLiquidity IL", async function () {
-    await expect(router.quoteLiquidity(1, 0, 0)).revertedWith('VeswRouter: INSUFFICIENT_LIQUIDITY');
+    await expect(router.quoteLiquidity(1, 0, 0)).revertedWith('FldxRouter: INSUFFICIENT_LIQUIDITY');
   });
 
   it("getAmountsOut with not exist pair", async function () {
@@ -587,7 +587,7 @@ describe("router tests", function () {
       owner.address,
       99999999999,
       {value: parseUnits('10')}
-    )).revertedWith('VeswRouter: DESIRED_A_AMOUNT');
+    )).revertedWith('FldxRouter: DESIRED_A_AMOUNT');
     await expect(router.addLiquidityMATIC(
       mim.address,
       true,
@@ -597,7 +597,7 @@ describe("router tests", function () {
       owner.address,
       99999999999,
       {value: parseUnits('10')}
-    )).revertedWith('VeswRouter: DESIRED_B_AMOUNT');
+    )).revertedWith('FldxRouter: DESIRED_B_AMOUNT');
   });
 
 
@@ -622,7 +622,7 @@ describe("router tests", function () {
       owner.address,
       99999999999,
       {value: parseUnits('0.77')}
-    )).revertedWith('VeswRouter: INSUFFICIENT_B_AMOUNT');
+    )).revertedWith('FldxRouter: INSUFFICIENT_B_AMOUNT');
 
     await expect(router.addLiquidityMATIC(
       mim.address,
@@ -633,7 +633,7 @@ describe("router tests", function () {
       owner.address,
       99999999999,
       {value: parseUnits('0.01')}
-    )).revertedWith('VeswRouter: INSUFFICIENT_A_AMOUNT');
+    )).revertedWith('FldxRouter: INSUFFICIENT_A_AMOUNT');
   });
 
 
@@ -678,7 +678,7 @@ describe("router tests", function () {
 
     const pairAdr = await factory.getPair(mim.address, wmatic.address, true);
 
-    await VeswPair__factory.connect(pairAdr, owner).approve(router.address, parseUnits('1111'));
+    await FldxPair__factory.connect(pairAdr, owner).approve(router.address, parseUnits('1111'));
     await expect(router.removeLiquidity(
       mim.address,
       wmatic.address,
@@ -688,7 +688,7 @@ describe("router tests", function () {
       0,
       owner.address,
       99999999999,
-    )).revertedWith('VeswRouter: INSUFFICIENT_A_AMOUNT');
+    )).revertedWith('FldxRouter: INSUFFICIENT_A_AMOUNT');
     await expect(router.removeLiquidity(
       mim.address,
       wmatic.address,
@@ -698,7 +698,7 @@ describe("router tests", function () {
       parseUnits('1'),
       owner.address,
       99999999999,
-    )).revertedWith('VeswRouter: INSUFFICIENT_B_AMOUNT');
+    )).revertedWith('FldxRouter: INSUFFICIENT_B_AMOUNT');
   });
 
   it("removeLiquidityMATICSupportingFeeOnTransferTokens test", async function () {
@@ -716,7 +716,7 @@ describe("router tests", function () {
 
     const pairAdr = await factory.getPair(tokenWithFee.address, wmatic.address, true);
 
-    await VeswPair__factory.connect(pairAdr, owner).approve(router.address, parseUnits('1111'));
+    await FldxPair__factory.connect(pairAdr, owner).approve(router.address, parseUnits('1111'));
     await router.removeLiquidityMATICSupportingFeeOnTransferTokens(
       tokenWithFee.address,
       true,
@@ -737,7 +737,7 @@ describe("router tests", function () {
       true,
       owner.address,
       BigNumber.from('999999999999999999'),
-    )).revertedWith('VeswRouter: INSUFFICIENT_OUTPUT_AMOUNT');
+    )).revertedWith('FldxRouter: INSUFFICIENT_OUTPUT_AMOUNT');
   });
 
   it("swapExactTokensForTokens IOA test", async function () {
@@ -751,7 +751,7 @@ describe("router tests", function () {
       }],
       owner.address,
       BigNumber.from('999999999999999999'),
-    )).revertedWith('VeswRouter: INSUFFICIENT_OUTPUT_AMOUNT');
+    )).revertedWith('FldxRouter: INSUFFICIENT_OUTPUT_AMOUNT');
   });
 
 
@@ -765,7 +765,7 @@ describe("router tests", function () {
       }],
       owner.address,
       BigNumber.from('999999999999999999'),
-    )).revertedWith('VeswRouter: INSUFFICIENT_OUTPUT_AMOUNT');
+    )).revertedWith('FldxRouter: INSUFFICIENT_OUTPUT_AMOUNT');
   });
 
   it("swapExactMATICForTokens IP test", async function () {
@@ -778,7 +778,7 @@ describe("router tests", function () {
       }],
       owner.address,
       BigNumber.from('999999999999999999'),
-    )).revertedWith('VeswRouter: INVALID_PATH');
+    )).revertedWith('FldxRouter: INVALID_PATH');
   });
 
   it("swapExactTokensForMATIC IOA test", async function () {
@@ -792,7 +792,7 @@ describe("router tests", function () {
       }],
       owner.address,
       BigNumber.from('999999999999999999'),
-    )).revertedWith('VeswRouter: INSUFFICIENT_OUTPUT_AMOUNT');
+    )).revertedWith('FldxRouter: INSUFFICIENT_OUTPUT_AMOUNT');
   });
 
   it("swapExactTokensForMATIC IP test", async function () {
@@ -806,7 +806,7 @@ describe("router tests", function () {
       }],
       owner.address,
       BigNumber.from('999999999999999999'),
-    )).revertedWith('VeswRouter: INVALID_PATH');
+    )).revertedWith('FldxRouter: INVALID_PATH');
   });
 
   it("swapExactTokensForTokensSupportingFeeOnTransferTokens IOA test", async function () {
@@ -833,7 +833,7 @@ describe("router tests", function () {
       }],
       owner.address,
       BigNumber.from('999999999999999999'),
-    )).revertedWith('VeswRouter: INSUFFICIENT_OUTPUT_AMOUNT');
+    )).revertedWith('FldxRouter: INSUFFICIENT_OUTPUT_AMOUNT');
   });
 
   it("swapExactMATICForTokensSupportingFeeOnTransferTokens IP test", async function () {
@@ -860,7 +860,7 @@ describe("router tests", function () {
       owner.address,
       BigNumber.from('999999999999999999'),
       {value: parseUnits('0.1')}
-    )).revertedWith('VeswRouter: INVALID_PATH');
+    )).revertedWith('FldxRouter: INVALID_PATH');
   });
 
   it("swapExactMATICForTokensSupportingFeeOnTransferTokens IOA test", async function () {
@@ -887,7 +887,7 @@ describe("router tests", function () {
       owner.address,
       BigNumber.from('999999999999999999'),
       {value: parseUnits('0.1')}
-    )).revertedWith('VeswRouter: INSUFFICIENT_OUTPUT_AMOUNT');
+    )).revertedWith('FldxRouter: INSUFFICIENT_OUTPUT_AMOUNT');
   });
 
   it("swapExactTokensForMATICSupportingFeeOnTransferTokens IOA test", async function () {
@@ -914,7 +914,7 @@ describe("router tests", function () {
       }],
       owner.address,
       BigNumber.from('999999999999999999'),
-    )).revertedWith('VeswRouter: INSUFFICIENT_OUTPUT_AMOUNT');
+    )).revertedWith('FldxRouter: INSUFFICIENT_OUTPUT_AMOUNT');
   });
 
   it("swapExactTokensForMATICSupportingFeeOnTransferTokens IP test", async function () {
@@ -941,12 +941,12 @@ describe("router tests", function () {
       }],
       owner.address,
       BigNumber.from('999999999999999999'),
-    )).revertedWith('VeswRouter: INVALID_PATH');
+    )).revertedWith('FldxRouter: INVALID_PATH');
   });
 
   it("router with broken matic should revert", async function () {
     const brokenMatic = await Deploy.deployContract(owner, 'BrokenWMATIC', 'WMATIC', 'WMATIC', 18, owner.address)
-    const routerWithBrokenMatic = await Deploy.deployVeswRouter01(owner, factory.address, brokenMatic.address);
+    const routerWithBrokenMatic = await Deploy.deployFldxRouter01(owner, factory.address, brokenMatic.address);
 
     await mim.approve(routerWithBrokenMatic.address, parseUnits('10'));
 
@@ -972,7 +972,7 @@ describe("router tests", function () {
       }],
       owner.address,
       99999999999
-    )).revertedWith('VeswRouter: ETH_TRANSFER_FAILED');
+    )).revertedWith('FldxRouter: ETH_TRANSFER_FAILED');
   });
 
 });

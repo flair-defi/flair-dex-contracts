@@ -17,12 +17,12 @@ import "../../interface/IMultiRewardsPool.sol";
 import "../Reentrancy.sol";
 import "../../lib/SafeERC20.sol";
 
-contract VeswVoter is IVoter, Reentrancy {
+contract FldxVoter is IVoter, Reentrancy {
   using SafeERC20 for IERC20;
 
   /// @dev The ve token that governs these contracts
   address public immutable override ve;
-  /// @dev VeswFactory
+  /// @dev FldxFactory
   address public immutable factory;
   address public immutable token;
   address public immutable gaugeFactory;
@@ -277,7 +277,7 @@ contract VeswVoter is IVoter, Reentrancy {
     return pools.length;
   }
 
-  /// @dev Add rewards to this contract. Usually it is VeswMinter.
+  /// @dev Add rewards to this contract. Usually it is FldxMinter.
   function notifyRewardAmount(uint amount) external override {
     require(amount != 0, "zero amount");
     uint _totalWeight = totalWeight;

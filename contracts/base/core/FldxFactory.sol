@@ -3,9 +3,9 @@
 pragma solidity ^0.8.13;
 
 import "../../interface/IFactory.sol";
-import "./VeswPair.sol";
+import "./FldxPair.sol";
 
-contract VeswFactory is IFactory {
+contract FldxFactory is IFactory {
 
   bool public override isPaused;
   address public pauser;
@@ -40,22 +40,22 @@ contract VeswFactory is IFactory {
   }
 
   function setPauser(address _pauser) external {
-    require(msg.sender == pauser, "VeswFactory: Not pauser");
+    require(msg.sender == pauser, "FldxFactory: Not pauser");
     pendingPauser = _pauser;
   }
 
   function acceptPauser() external {
-    require(msg.sender == pendingPauser, "VeswFactory: Not pending pauser");
+    require(msg.sender == pendingPauser, "FldxFactory: Not pending pauser");
     pauser = pendingPauser;
   }
 
   function setPause(bool _state) external {
-    require(msg.sender == pauser, "VeswFactory: Not pauser");
+    require(msg.sender == pauser, "FldxFactory: Not pauser");
     isPaused = _state;
   }
 
   function pairCodeHash() external pure override returns (bytes32) {
-    return keccak256(type(VeswPair).creationCode);
+    return keccak256(type(FldxPair).creationCode);
   }
 
   function getInitializable() external view override returns (address, address, bool) {
@@ -64,14 +64,14 @@ contract VeswFactory is IFactory {
 
   function createPair(address tokenA, address tokenB, bool stable)
   external override returns (address pair) {
-    require(tokenA != tokenB, 'VeswFactory: IDENTICAL_ADDRESSES');
+    require(tokenA != tokenB, 'FldxFactory: IDENTICAL_ADDRESSES');
     (address token0, address token1) = tokenA < tokenB ? (tokenA, tokenB) : (tokenB, tokenA);
-    require(token0 != address(0), 'VeswFactory: ZERO_ADDRESS');
-    require(getPair[token0][token1][stable] == address(0), 'VeswFactory: PAIR_EXISTS');
+    require(token0 != address(0), 'FldxFactory: ZERO_ADDRESS');
+    require(getPair[token0][token1][stable] == address(0), 'FldxFactory: PAIR_EXISTS');
     // notice salt includes stable as well, 3 parameters
     bytes32 salt = keccak256(abi.encodePacked(token0, token1, stable));
     (_temp0, _temp1, _temp) = (token0, token1, stable);
-    pair = address(new VeswPair{salt : salt}());
+    pair = address(new FldxPair{salt : salt}());
     getPair[token0][token1][stable] = pair;
     // populate mapping in the reverse direction
     getPair[token1][token0][stable] = pair;

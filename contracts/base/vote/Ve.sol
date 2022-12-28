@@ -40,8 +40,8 @@ contract Ve is IERC721, IERC721Metadata, IVe, Reentrancy {
   mapping(uint => bool) public voted;
   address public controller;
 
-  string constant public override name = "veVESW";
-  string constant public override symbol = "veVESW";
+  string constant public override name = "veFLDX";
+  string constant public override symbol = "veFLDX";
   string constant public version = "1.0.0";
   uint8 constant public decimals = 18;
 

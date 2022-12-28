@@ -1,7 +1,7 @@
 /* tslint:disable:variable-name no-shadowed-variable ban-types no-var-requires no-any */
 import { SignerWithAddress } from "@nomiclabs/hardhat-ethers/signers";
 import { network } from "hardhat";
-import {Controller, Vesw, VeswMinter, Token, Ve, VeDist } from "../../typechain";
+import {Controller, Fldx, FldxMinter, Token, Ve, VeDist } from "../../typechain";
 import {Deploy} from "../../scripts/deploy/Deploy";
 
 const { expect } = require("chai");
@@ -26,30 +26,30 @@ const { ethers } = require("hardhat");
 describe("minter old tests", function () {
 
   let token;
-  let ve_underlying:Vesw;
+  let ve_underlying:Fldx;
   let ve:Ve;
   let owner:SignerWithAddress;
-  let minter:VeswMinter;
+  let minter:FldxMinter;
   let ve_dist:VeDist;
 
   it("deploy base", async function () {
     [owner] = await ethers.getSigners(0);
     token = await ethers.getContractFactory("Token");
-    const Vesw = await ethers.getContractFactory("Vesw");
+    const Fldx = await ethers.getContractFactory("Fldx");
     const controllerCtr = await ethers.getContractFactory("Controller");
     const controller = await controllerCtr.deploy() as Controller;
     const mim = await token.deploy('MIM', 'MIM', 18, owner.address);
     await mim.mint(owner.address, ethers.BigNumber.from("1000000000000000000000000000000"));
-    ve_underlying = await Vesw.deploy();
+    ve_underlying = await Fldx.deploy();
     const vecontract = await ethers.getContractFactory("Ve");
     ve = await vecontract.deploy(ve_underlying.address, controller.address);
     await ve_underlying.mint(owner.address, ethers.BigNumber.from("10000000000000000000000000"));
     const treasury = await Deploy.deployGovernanceTreasury(owner);
-    const VeswFactory = await ethers.getContractFactory("VeswFactory");
-    const factory = await VeswFactory.deploy(treasury.address);
+    const FldxFactory = await ethers.getContractFactory("FldxFactory");
+    const factory = await FldxFactory.deploy(treasury.address);
     await factory.deployed();
-    const VeswRouter01 = await ethers.getContractFactory("VeswRouter01");
-    const router = await VeswRouter01.deploy(factory.address, owner.address);
+    const FldxRouter01 = await ethers.getContractFactory("FldxRouter01");
+    const router = await FldxRouter01.deploy(factory.address, owner.address);
     await router.deployed();
     const GaugeFactory = await ethers.getContractFactory("GaugeFactory");
     const gauges_factory = await GaugeFactory.deploy();
@@ -57,8 +57,8 @@ describe("minter old tests", function () {
     const BribeFactory = await ethers.getContractFactory("BribeFactory");
     const bribe_factory = await BribeFactory.deploy();
     await bribe_factory.deployed();
-    const VeswVoter = await ethers.getContractFactory("VeswVoter");
-    const voter = await VeswVoter.deploy(ve.address, factory.address, gauges_factory.address, bribe_factory.address);
+    const FldxVoter = await ethers.getContractFactory("FldxVoter");
+    const voter = await FldxVoter.deploy(ve.address, factory.address, gauges_factory.address, bribe_factory.address);
     await voter.deployed();
 
     await voter.initialize([mim.address, ve_underlying.address],owner.address);
@@ -71,7 +71,7 @@ describe("minter old tests", function () {
     await controller.setVeDist(ve_dist.address)
     await controller.setVoter(voter.address)
 
-    const Minter = await ethers.getContractFactory("VeswMinter");
+    const Minter = await ethers.getContractFactory("FldxMinter");
     minter = await Minter.deploy(ve.address, controller.address, 2);
     await minter.deployed();
     await ve_dist.setDepositor(minter.address);

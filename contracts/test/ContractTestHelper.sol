@@ -2,7 +2,7 @@
 
 pragma solidity ^0.8.13;
 
-import "../base/core/VeswPair.sol";
+import "../base/core/FldxPair.sol";
 import "../base/vote/Ve.sol";
 import "../interface/IVeDist.sol";
 
@@ -11,15 +11,15 @@ contract ContractTestHelper is IERC721Receiver {
   using Math for uint;
 
   function pairCurrentTwice(address pair, address tokenIn, uint amountIn) external returns (uint, uint){
-    uint c0 = VeswPair(pair).current(tokenIn, amountIn);
-    VeswPair(pair).sync();
-    uint c1 = VeswPair(pair).current(tokenIn, amountIn);
+    uint c0 = FldxPair(pair).current(tokenIn, amountIn);
+    FldxPair(pair).sync();
+    uint c1 = FldxPair(pair).current(tokenIn, amountIn);
     return (c0, c1);
   }
 
   function hook(address, uint amount0, uint amount1, bytes calldata data) external {
     address pair = abi.decode(data, (address));
-    (address token0, address token1) = VeswPair(pair).tokens();
+    (address token0, address token1) = FldxPair(pair).tokens();
     if (amount0 != 0) {
       IERC20(token0).safeTransfer(pair, amount0);
     }

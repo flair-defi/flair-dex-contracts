@@ -1,11 +1,11 @@
 /* tslint:disable:variable-name no-shadowed-variable ban-types no-var-requires no-any */
 import {
   Bribe, Controller,
-  Vesw,
-  VeswFactory,
-  VeswMinter,
-  VeswPair,
-  VeswRouter01,
+  Fldx,
+  FldxFactory,
+  FldxMinter,
+  FldxPair,
+  FldxRouter01,
   Gauge,
   GaugeFactory,
   GovernanceTreasury__factory,
@@ -29,14 +29,14 @@ describe("base old tests", function () {
   let ust: Token;
   let mim: Token;
   let dai: Token;
-  let ve_underlying: Vesw;
+  let ve_underlying: Fldx;
   let late_reward: Token;
   let ve: Ve;
-  let factory: VeswFactory;
-  let router: VeswRouter01;
-  let pair: VeswPair;
-  let pair2: VeswPair;
-  let pair3: VeswPair;
+  let factory: FldxFactory;
+  let router: FldxRouter01;
+  let pair: FldxPair;
+  let pair2: FldxPair;
+  let pair3: FldxPair;
   let owner: SignerWithAddress;
   let voter: any;
   let gauge: Gauge;
@@ -45,7 +45,7 @@ describe("base old tests", function () {
   let bribe: Bribe;
   let bribe2: Bribe;
   let bribe3: Bribe;
-  let minter: VeswMinter;
+  let minter: FldxMinter;
   let ve_dist: VeDist;
   let staking: StakingRewards;
   let owner2: SignerWithAddress;
@@ -150,24 +150,24 @@ describe("base old tests", function () {
     expect(await mim.name()).to.equal("MIM");
   });
 
-  it("deploy VeswFactory and test pair length", async function () {
+  it("deploy FldxFactory and test pair length", async function () {
     const treasury = await Deploy.deployGovernanceTreasury(owner);
-    const VeswFactory = await ethers.getContractFactory("VeswFactory");
-    factory = await VeswFactory.deploy(treasury.address);
+    const FldxFactory = await ethers.getContractFactory("FldxFactory");
+    factory = await FldxFactory.deploy(treasury.address);
     await factory.deployed();
 
     expect(await factory.allPairsLength()).to.equal(0);
   });
 
-  it("deploy VeswRouter01 and test factory address", async function () {
-    const VeswRouter01 = await ethers.getContractFactory("VeswRouter01");
-    router = await VeswRouter01.deploy(factory.address, owner.address);
+  it("deploy FldxRouter01 and test factory address", async function () {
+    const FldxRouter01 = await ethers.getContractFactory("FldxRouter01");
+    router = await FldxRouter01.deploy(factory.address, owner.address);
     await router.deployed();
 
     expect(await router.factory()).to.equal(factory.address);
   });
 
-  it("deploy pair via VeswFactory owner", async function () {
+  it("deploy pair via FldxFactory owner", async function () {
     const ust_1 = ethers.BigNumber.from("1000000");
     const mim_1 = ethers.BigNumber.from("1000000000000000000");
     const dai_1 = ethers.BigNumber.from("1000000000000000000");
@@ -183,7 +183,7 @@ describe("base old tests", function () {
     expect(await factory.allPairsLength()).to.equal(3);
   });
 
-  it("deploy pair via VeswFactory owner2", async function () {
+  it("deploy pair via FldxFactory owner2", async function () {
     const ust_1 = ethers.BigNumber.from("1000000");
     const mim_1 = ethers.BigNumber.from("1000000000000000000");
     const dai_1 = ethers.BigNumber.from("1000000000000000000");
@@ -201,14 +201,14 @@ describe("base old tests", function () {
 
   it("confirm pair for mim-ust", async function () {
     const create2address = await router.pairFor(mim.address, ust.address, true);
-    const VeswPair = await ethers.getContractFactory("VeswPair");
+    const FldxPair = await ethers.getContractFactory("FldxPair");
     const address = await factory.getPair(mim.address, ust.address, true);
     const allpairs0 = await factory.allPairs(0);
-    pair = await VeswPair.attach(address);
+    pair = await FldxPair.attach(address);
     const address2 = await factory.getPair(mim.address, ust.address, false);
-    pair2 = await VeswPair.attach(address2);
+    pair2 = await FldxPair.attach(address2);
     const address3 = await factory.getPair(mim.address, dai.address, true);
-    pair3 = await VeswPair.attach(address3);
+    pair3 = await FldxPair.attach(address3);
 
     expect(pair.address).to.equal(create2address);
   });
@@ -243,7 +243,7 @@ describe("base old tests", function () {
     expect(await pair.connect(owner2).getAmountOut(ust_1, ust.address)).to.equal(ethers.BigNumber.from("991833071663219513"));
   });
 
-  it("VeswRouter01 addLiquidity", async function () {
+  it("FldxRouter01 addLiquidity", async function () {
     const ust_1000 = ethers.BigNumber.from("100000000000");
     const mim_1000 = ethers.BigNumber.from("100000000000000000000000");
     const mim_100000000 = ethers.BigNumber.from("100000000000000000000000000");
@@ -261,7 +261,7 @@ describe("base old tests", function () {
     await router.addLiquidity(mim.address, dai.address, true, mim_100000000, dai_100000000, 0, 0, owner.address, Date.now());
   });
 
-  it("VeswRouter01 removeLiquidity", async function () {
+  it("FldxRouter01 removeLiquidity", async function () {
     const ust_1000 = ethers.BigNumber.from("100000000000");
     const mim_1000 = ethers.BigNumber.from("100000000000000000000000");
     const mim_100000000 = ethers.BigNumber.from("100000000000000000000000000");
@@ -273,7 +273,7 @@ describe("base old tests", function () {
     const output = await router.quoteRemoveLiquidity(mim.address, ust.address, true, ust_1000);
   });
 
-  it("VeswRouter01 addLiquidity owner2", async function () {
+  it("FldxRouter01 addLiquidity owner2", async function () {
     const ust_1000 = ethers.BigNumber.from("100000000000");
     const mim_1000 = ethers.BigNumber.from("100000000000000000000000");
     const mim_100000000 = ethers.BigNumber.from("100000000000000000000000000");
@@ -290,7 +290,7 @@ describe("base old tests", function () {
     await router.connect(owner2).addLiquidity(mim.address, dai.address, true, mim_100000000, dai_100000000, 0, 0, owner.address, Date.now());
   });
 
-  it("VeswRouter01 pair1 getAmountsOut & swapExactTokensForTokens", async function () {
+  it("FldxRouter01 pair1 getAmountsOut & swapExactTokensForTokens", async function () {
     const treasury = await factory.treasury();
     const ust_1 = ethers.BigNumber.from("1000000");
     const route = {from: ust.address, to: mim.address, stable: true}
@@ -313,7 +313,7 @@ describe("base old tests", function () {
     expect(await ust.balanceOf(owner.address)).to.be.above(b2);
   });
 
-  it("VeswRouter01 pair1 getAmountsOut & swapExactTokensForTokens owner2", async function () {
+  it("FldxRouter01 pair1 getAmountsOut & swapExactTokensForTokens owner2", async function () {
     const ust_1 = ethers.BigNumber.from("1000000");
     const route = {from: ust.address, to: mim.address, stable: true}
 
@@ -331,7 +331,7 @@ describe("base old tests", function () {
     expect(await ust.balanceOf(owner.address)).to.be.equal(b);
   });
 
-  it("VeswRouter01 pair2 getAmountsOut & swapExactTokensForTokens", async function () {
+  it("FldxRouter01 pair2 getAmountsOut & swapExactTokensForTokens", async function () {
     const ust_1 = ethers.BigNumber.from("1000000");
     const route = {from: ust.address, to: mim.address, stable: false}
 
@@ -344,7 +344,7 @@ describe("base old tests", function () {
     await router.swapExactTokensForTokens(ust_1, expected_output[1], [route], owner.address, Date.now());
   });
 
-  it("VeswRouter01 pair3 getAmountsOut & swapExactTokensForTokens", async function () {
+  it("FldxRouter01 pair3 getAmountsOut & swapExactTokensForTokens", async function () {
     const mim_1000000 = ethers.BigNumber.from("1000000000000000000000000");
     const route = {from: mim.address, to: dai.address, stable: true}
 
@@ -357,15 +357,15 @@ describe("base old tests", function () {
     await router.swapExactTokensForTokens(mim_1000000, expected_output[1], [route], owner.address, Date.now());
   });
 
-  it("deploy VeswVoter", async function () {
+  it("deploy FldxVoter", async function () {
     const GaugeFactory = await ethers.getContractFactory("GaugeFactory");
     gauges_factory = await GaugeFactory.deploy();
     await gauges_factory.deployed();
     const BribeFactory = await ethers.getContractFactory("BribeFactory");
     const bribe_factory = await BribeFactory.deploy();
     await bribe_factory.deployed();
-    const VeswVoter = await ethers.getContractFactory("VeswVoter");
-    voter = await VeswVoter.deploy(ve.address, factory.address, gauges_factory.address, bribe_factory.address);
+    const FldxVoter = await ethers.getContractFactory("FldxVoter");
+    voter = await FldxVoter.deploy(ve.address, factory.address, gauges_factory.address, bribe_factory.address);
     await voter.deployed();
 
     expect(await voter.poolsLength()).to.equal(0);
@@ -376,7 +376,7 @@ describe("base old tests", function () {
     ve_dist = await VeDist.deploy(ve.address);
     await ve_dist.deployed();
 
-    const Minter = await ethers.getContractFactory("VeswMinter");
+    const Minter = await ethers.getContractFactory("FldxMinter");
     minter = await Minter.deploy(ve.address, controller.address, 2);
     await minter.deployed();
     await ve_dist.setDepositor(minter.address);
@@ -385,7 +385,7 @@ describe("base old tests", function () {
     await voter.initialize([ust.address, mim.address, dai.address, ve_underlying.address], minter.address);
   });
 
-  it("deploy VeswFactory gauge", async function () {
+  it("deploy FldxFactory gauge", async function () {
     const pair_1000 = ethers.BigNumber.from("1000000000");
 
     await ve_underlying.approve(voter.address, ethers.BigNumber.from("1500000000000000000000000"));
@@ -446,7 +446,7 @@ describe("base old tests", function () {
   });
 
 
-  it("deploy VeswFactory gauge owner2", async function () {
+  it("deploy FldxFactory gauge owner2", async function () {
     const pair_1000 = ethers.BigNumber.from("1000000000");
     const pair_3000 = ethers.BigNumber.from("3000000000");
 
@@ -579,7 +579,7 @@ describe("base old tests", function () {
     await bribe.getReward(1, [ve_underlying.address]);
   });
 
-  it("VeswRouter01 pair1 getAmountsOut & swapExactTokensForTokens", async function () {
+  it("FldxRouter01 pair1 getAmountsOut & swapExactTokensForTokens", async function () {
     const ust_1 = ethers.BigNumber.from("1000000");
     const route = {from: ust.address, to: mim.address, stable: true}
 
@@ -591,7 +591,7 @@ describe("base old tests", function () {
     const fees = await pair.fees()
   });
 
-  it("VeswRouter01 pair2 getAmountsOut & swapExactTokensForTokens", async function () {
+  it("FldxRouter01 pair2 getAmountsOut & swapExactTokensForTokens", async function () {
     const ust_1 = ethers.BigNumber.from("1000000");
     const route = {from: ust.address, to: mim.address, stable: false}
 
@@ -603,7 +603,7 @@ describe("base old tests", function () {
     const fees = await pair2.fees()
   });
 
-  it("VeswRouter01 pair1 getAmountsOut & swapExactTokensForTokens", async function () {
+  it("FldxRouter01 pair1 getAmountsOut & swapExactTokensForTokens", async function () {
     const mim_1 = ethers.BigNumber.from("1000000000000000000");
     const route = {from: mim.address, to: ust.address, stable: true}
 
@@ -615,7 +615,7 @@ describe("base old tests", function () {
     const fees = await pair.fees()
   });
 
-  it("VeswRouter01 pair2 getAmountsOut & swapExactTokensForTokens", async function () {
+  it("FldxRouter01 pair2 getAmountsOut & swapExactTokensForTokens", async function () {
     const mim_1 = ethers.BigNumber.from("1000000000000000000");
     const route = {from: mim.address, to: ust.address, stable: false}
 
@@ -625,7 +625,7 @@ describe("base old tests", function () {
     await router.swapExactTokensForTokens(mim_1, expected_output[1], [route], owner.address, Date.now());
   });
 
-  it("VeswRouter01 pair1>pair2 getAmountsOut & swapExactTokensForTokens", async function () {
+  it("FldxRouter01 pair1>pair2 getAmountsOut & swapExactTokensForTokens", async function () {
     const mim_1 = ethers.BigNumber.from("1000000000000000000");
     const route = [{from: mim.address, to: ust.address, stable: false}, {
       from: ust.address,
@@ -772,7 +772,7 @@ describe("base old tests", function () {
     await ve.withdraw(1);
   });
 
-  it("VeswRouter01 addLiquidity owner3", async function () {
+  it("FldxRouter01 addLiquidity owner3", async function () {
     const ust_1000 = ethers.BigNumber.from("1000000000000");
     const mim_1000 = ethers.BigNumber.from("1000000000000000000000000");
     const mim_100000000 = ethers.BigNumber.from("100000000000000000000000000");
@@ -783,7 +783,7 @@ describe("base old tests", function () {
     await router.connect(owner3).addLiquidity(mim.address, ust.address, true, mim_1000, ust_1000, 0, 0, owner3.address, Date.now());
   });
 
-  it("deploy VeswFactory gauge owner3", async function () {
+  it("deploy FldxFactory gauge owner3", async function () {
     const pair_1000 = ethers.BigNumber.from("1000000000");
     const pair_2000 = ethers.BigNumber.from("2000000000");
 

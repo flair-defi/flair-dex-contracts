@@ -3,7 +3,7 @@ import {
   Bribe__factory,
   Gauge,
   Gauge__factory,
-  Token, VeswPair, VeswPair__factory
+  Token, FldxPair, FldxPair__factory
 } from "../../../typechain";
 import {SignerWithAddress} from "@nomiclabs/hardhat-ethers/signers";
 import {ethers} from "hardhat";
@@ -34,9 +34,9 @@ describe("gauge and bribe tests", function () {
   let mim: Token;
   let dai: Token;
   let wmatic: Token;
-  let mimUstPair: VeswPair;
-  let mimDaiPair: VeswPair;
-  // let ustDaiPair: VeswPair;
+  let mimUstPair: FldxPair;
+  let mimDaiPair: FldxPair;
+  // let ustDaiPair: FldxPair;
 
   let gaugeMimUst: Gauge;
   // let gaugeMimDai: Gauge;
@@ -297,7 +297,7 @@ describe("gauge and bribe tests", function () {
       {value: parseUnits('10000')}
     );
     const pairAdr = await core.factory.getPair(mim.address, wmatic.address, true);
-    const pair = VeswPair__factory.connect(pairAdr, owner);
+    const pair = FldxPair__factory.connect(pairAdr, owner);
 
     await core.voter.createGauge(pairAdr);
 
@@ -430,7 +430,7 @@ describe("gauge and bribe tests", function () {
       true
     );
     const pairAdr = await core.factory.getPair(mim.address, ust.address, true)
-    const pair = VeswPair__factory.connect(pairAdr, owner);
+    const pair = FldxPair__factory.connect(pairAdr, owner);
     const pairBalance = await pair.balanceOf(owner.address);
     expect(pairBalance).is.not.eq(0);
     await pair.approve(gaugeMimUst.address, pairBalance);
@@ -459,7 +459,7 @@ async function depositToGauge(
     true
   );
   const pairAdr = await core.factory.getPair(token0, token1, true)
-  const pair = VeswPair__factory.connect(pairAdr, owner);
+  const pair = FldxPair__factory.connect(pairAdr, owner);
   const pairBalance = await pair.balanceOf(owner.address);
   expect(pairBalance).is.not.eq(0);
   await pair.approve(gauge.address, pairBalance);

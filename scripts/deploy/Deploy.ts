@@ -14,11 +14,11 @@ import {
   Token,
   Ve,
   VeDist,
-  Vesw,
-  VeswFactory,
-  VeswMinter,
-  VeswRouter01,
-  VeswVoter
+  Fldx,
+  FldxFactory,
+  FldxMinter,
+  FldxRouter01,
+  FldxVoter
 } from "../../typechain";
 import {Misc} from "../Misc";
 import {CoreAddresses} from "./CoreAddresses";
@@ -73,8 +73,8 @@ export class Deploy {
     return _factory.attach(receipt.contractAddress);
   }
 
-  public static async deployVesw(signer: SignerWithAddress) {
-    return (await Deploy.deployContract(signer, 'Vesw')) as Vesw;
+  public static async deployFldx(signer: SignerWithAddress) {
+    return (await Deploy.deployContract(signer, 'Fldx')) as Fldx;
   }
 
   public static async deployToken(signer: SignerWithAddress, name: string, symbol: string, decimal: number) {
@@ -89,20 +89,20 @@ export class Deploy {
     return (await Deploy.deployContract(signer, 'BribeFactory')) as BribeFactory;
   }
 
-  public static async deployVeswFactory(signer: SignerWithAddress, treasury: string) {
-    return (await Deploy.deployContract(signer, 'VeswFactory', treasury)) as VeswFactory;
+  public static async deployFldxFactory(signer: SignerWithAddress, treasury: string) {
+    return (await Deploy.deployContract(signer, 'FldxFactory', treasury)) as FldxFactory;
   }
 
   public static async deployGovernanceTreasury(signer: SignerWithAddress) {
     return (await Deploy.deployContract(signer, 'GovernanceTreasury')) as GovernanceTreasury;
   }
 
-  public static async deployVeswRouter01(
+  public static async deployFldxRouter01(
     signer: SignerWithAddress,
     factory: string,
     networkToken: string,
   ) {
-    return (await Deploy.deployContract(signer, 'VeswRouter01', factory, networkToken)) as VeswRouter01;
+    return (await Deploy.deployContract(signer, 'FldxRouter01', factory, networkToken)) as FldxRouter01;
   }
 
   public static async deployLibrary(
@@ -126,7 +126,7 @@ export class Deploy {
     return (await Deploy.deployContract(signer, 'VeDist', ve)) as VeDist;
   }
 
-  public static async deployVeswVoter(
+  public static async deployFldxVoter(
     signer: SignerWithAddress,
     ve: string,
     factory: string,
@@ -135,15 +135,15 @@ export class Deploy {
   ) {
     return (await Deploy.deployContract(
       signer,
-      'VeswVoter',
+      'FldxVoter',
       ve,
       factory,
       gauges,
       bribes,
-    )) as VeswVoter;
+    )) as FldxVoter;
   }
 
-  public static async deployVeswMinter(
+  public static async deployFldxMinter(
     signer: SignerWithAddress,
     ve: string,
     controller: string,
@@ -151,11 +151,11 @@ export class Deploy {
   ) {
     return (await Deploy.deployContract(
       signer,
-      'VeswMinter',
+      'FldxMinter',
       ve,
       controller,
       warmingUpPeriod,
-    )) as VeswMinter;
+    )) as FldxMinter;
   }
 
   public static async deployCore(
@@ -178,7 +178,7 @@ export class Deploy {
       veDist,
       voter,
       minter,
-    ] = await Deploy.deployVeswSystem(
+    ] = await Deploy.deployFldxSystem(
       signer,
       networkToken,
       voterTokens,
@@ -190,15 +190,15 @@ export class Deploy {
     );
 
     return new CoreAddresses(
-      token as Vesw,
+      token as Fldx,
       gaugesFactory as GaugeFactory,
       bribesFactory as BribeFactory,
-      baseFactory as VeswFactory,
-      router as VeswRouter01,
+      baseFactory as FldxFactory,
+      router as FldxRouter01,
       ve as Ve,
       veDist as VeDist,
-      voter as VeswVoter,
-      minter as VeswMinter,
+      voter as FldxVoter,
+      minter as FldxMinter,
       treasury as GovernanceTreasury
     );
   }
@@ -209,15 +209,15 @@ export class Deploy {
     networkToken: string,
   ) {
     const treasury = await Deploy.deployGovernanceTreasury(signer);
-    const baseFactory = await Deploy.deployVeswFactory(signer, treasury.address);
-    const router = await Deploy.deployVeswRouter01(signer, baseFactory.address, networkToken);
+    const baseFactory = await Deploy.deployFldxFactory(signer, treasury.address);
+    const router = await Deploy.deployFldxRouter01(signer, baseFactory.address, networkToken);
     const library = await Deploy.deployLibrary(signer, router.address);
     const multicall = await Deploy.deployMultiCall(signer);
 
     return [baseFactory, router, treasury, library, multicall];
   }
 
-  public static async deployVeswSystem(
+  public static async deployFldxSystem(
     signer: SignerWithAddress,
     networkToken: string,
     voterTokens: string[],
@@ -228,7 +228,7 @@ export class Deploy {
     warmingUpPeriod: number,
   ) {
     const controller = await Deploy.deployContract(signer, 'Controller') as Controller;
-    const token = await Deploy.deployVesw(signer);
+    const token = await Deploy.deployFldx(signer);
     const ve = await Deploy.deployVe(signer, token.address, controller.address);
     const gaugesFactory = await Deploy.deployGaugeFactory(signer);
     const bribesFactory = await Deploy.deployBribeFactory(signer);
@@ -236,9 +236,9 @@ export class Deploy {
     await Misc.runAndWait(() => token.mint(signer.address,"1000000000000000000000"));
 
     const veDist = await Deploy.deployVeDist(signer, ve.address);
-    const voter = await Deploy.deployVeswVoter(signer, ve.address, baseFactory, gaugesFactory.address, bribesFactory.address);
+    const voter = await Deploy.deployFldxVoter(signer, ve.address, baseFactory, gaugesFactory.address, bribesFactory.address);
 
-    const minter = await Deploy.deployVeswMinter(signer, ve.address, controller.address, warmingUpPeriod);
+    const minter = await Deploy.deployFldxMinter(signer, ve.address, controller.address, warmingUpPeriod);
 
     await Misc.runAndWait(() => token.setMinter(minter.address));
     await Misc.runAndWait(() => veDist.setDepositor(minter.address));

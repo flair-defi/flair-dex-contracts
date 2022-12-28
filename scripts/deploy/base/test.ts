@@ -9,7 +9,7 @@ import {Controller, Multicall2} from "../../../typechain";
 
 async function addLiquidity() {
 
-    const Router = await ethers.getContractFactory("VeswRouter01");
+    const Router = await ethers.getContractFactory("FldxRouter01");
     const router = await Router.attach("0x0F6089180CEDab618f14b09bc8FfC9657c7F8d7f");
     const deadline = "" + moment().add(600, "seconds").unix();
 
@@ -40,7 +40,7 @@ async function multicall() {
 }
 
 async function addLiquidityMATIC() {
-    const Router = await ethers.getContractFactory("VeswRouter01");
+    const Router = await ethers.getContractFactory("FldxRouter01");
     const router = await Router.attach("0x0F6089180CEDab618f14b09bc8FfC9657c7F8d7f");
     const deadline = "" + moment().add(600, "seconds").unix();
 

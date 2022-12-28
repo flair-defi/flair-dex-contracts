@@ -139,7 +139,7 @@ abstract contract MultiRewardsPoolBase is Reentrancy, IMultiRewardsPool {
     uint length = rewardTokens.length;
     require(length > 3, "First 3 tokens should not be removed");
     // keep 3 tokens as guarantee against malicious actions
-    // assume it will be VESW + pool tokens
+    // assume it will be FLDX + pool tokens
     uint i = 3;
     bool found = false;
     for (; i < length; i++) {

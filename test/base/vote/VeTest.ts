@@ -2,7 +2,7 @@ import {
   Bribe,
   Bribe__factory,
   ContractTestHelper,
-  VeswPair,
+  FldxPair,
   Gauge,
   Gauge__factory,
   Token
@@ -35,7 +35,7 @@ describe("ve tests", function () {
   let ust: Token;
   let mim: Token;
   let dai: Token;
-  let pair: VeswPair;
+  let pair: FldxPair;
 
   let gauge: Gauge;
   let bribe: Bribe;
@@ -53,8 +53,8 @@ describe("ve tests", function () {
 
     core = await Deploy.deployCore(
       owner,
-      TestnetAddresses.WXDC_TOKEN,
-      [TestnetAddresses.WXDC_TOKEN, ust.address, mim.address, dai.address],
+      TestnetAddresses.FLR_TOKEN,
+      [TestnetAddresses.FLR_TOKEN, ust.address, mim.address, dai.address],
       [owner.address, owner2.address],
       [parseUnits('100'), parseUnits('100')],
       parseUnits('200')
