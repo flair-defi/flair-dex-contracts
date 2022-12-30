@@ -1,1 +1,1 @@
-Smart Contracts for Ve Swap
+Smart Contracts for Flares Dex

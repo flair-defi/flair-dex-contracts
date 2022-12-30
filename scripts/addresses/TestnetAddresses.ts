@@ -7,6 +7,6 @@ export class TestnetAddresses {
   public static ZERO_ADDRESS = "0x0000000000000000000000000000000000000000";
 
   // tokens
-  public static FLR_TOKEN = "0xC67DCE33D7A8efA5FfEB961899C73fe01bCe9273".toLowerCase();
+  public static FLR_TOKEN = "0x792296e2a15e6Ceb5f5039DecaE7A1f25b00B0B0".toLowerCase();
 
 }

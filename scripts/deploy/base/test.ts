@@ -10,13 +10,13 @@ import {Controller, Multicall2} from "../../../typechain";
 async function addLiquidity() {
 
     const Router = await ethers.getContractFactory("FldxRouter01");
-    const router = await Router.attach("0x0F6089180CEDab618f14b09bc8FfC9657c7F8d7f");
+    const router = await Router.attach("0xf36E4600B7ae0554781ed44A50f866086ceF3520");
     const deadline = "" + moment().add(600, "seconds").unix();
 
     const Token = await ethers.getContractFactory("Token");
 
-    const mim = await Token.attach("0x49eBd4a0b8a4D498CA9b30Ee94111306cd71ac04");
-    const usdt = await Token.attach("0xc299e3c09458C092081D885f85f545F800FCb85b");
+    const mim = await Token.attach("0x779d4D3A8B0E75219E653Ab310DD76B01333e534");
+    const usdt = await Token.attach("0xDD437EbC9a0373e426CEF84680cc06Cb7d1F1645");
 
     await Misc.runAndWait(() => mim.approve(router.address, "10000000000000000000000000"));
     await Misc.runAndWait(() => usdt.approve(router.address, "1000000000000000000"));
@@ -56,7 +56,7 @@ async function addLiquidityMATIC() {
     ));
 }
 
-addLiquidityMATIC()
+addLiquidity()
     .then(() => process.exit(0))
     .catch(error => {
         console.error(error);
