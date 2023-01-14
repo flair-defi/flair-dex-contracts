@@ -20,44 +20,37 @@ contract FldxMinter is IMinter {
   /// @dev Allows minting once per week (reset every Thursday 00:00 UTC)
   uint internal constant _WEEK = 86400 * 7;
   uint internal constant _LOCK_PERIOD = 86400 * 7 * 52 * 4;
+  uint internal constant PRECISION = 100;
 
   /// @dev Decrease base weekly emission by 2%
   uint internal constant _WEEKLY_EMISSION_DECREASE = 98;
-  uint internal constant _WEEKLY_EMISSION_DECREASE_DENOMINATOR = 100;
 
-
-  /// @dev Weekly emission threshold for the end game. 1% of circulation supply.
-  uint internal constant _TAIL_EMISSION = 1;
-  uint internal constant _TAIL_EMISSION_DENOMINATOR = 100;
+  /// @dev Weekly emission threshold for the end game. 2% of circulation supply.
+  uint internal constant _TAIL_EMISSION = 2;
 
   /// @dev Treasury Emission.
-  uint internal constant _TREASURY_EMISSION = 5;
-  uint internal constant __TREASURY_EMISSION_DENOMINATOR = 100;
+  uint internal constant _TREASURY_EMISSION = 3;
 
-  /// @dev Decrease initialStubCirculationSupply by 1% per week.
-  ///      Decreasing only if circulation supply lower that the stub circulation
-  uint internal constant _INITIAL_CIRCULATION_DECREASE = 99;
-  uint internal constant _INITIAL_CIRCULATION_DECREASE_DENOMINATOR = 100;
-
-  /// @dev Stubbed initial circulating supply to avoid first weeks gaps of locked amounts.
-  ///      Should be equal expected unlocked token percent.
-  uint internal constant _STUB_CIRCULATION = 10;
-  uint internal constant _STUB_CIRCULATION_DENOMINATOR = 100;
+  /// @dev NFT Stakers Emission.
+  uint internal constant _NFT_STAKERS_EMISSION = 3;
 
   /// @dev The core parameter for determinate the whole emission dynamic.
   ///       Will be decreased every week.
-  uint internal constant _START_BASE_WEEKLY_EMISSION = 20_000_000e18;
+  uint internal constant _START_BASE_WEEKLY_EMISSION = 10_000_000e18;
 
 
   IUnderlying public immutable token;
   IVe public immutable ve;
   address public immutable controller;
   uint public baseWeeklyEmission = _START_BASE_WEEKLY_EMISSION;
-  uint public initialStubCirculation;
   uint public activePeriod;
-  address private treasury = 0x93FF343f0c00096e25d77BF137339c6dE5A51b5E;
+
+  address public treasury;
+  address public pendingTreasury;
+  address public nftStakingContract;
 
   address internal initializer;
+  bool public initialDistributionFinished;
 
   event Mint(
     address indexed sender,
@@ -76,18 +69,20 @@ contract FldxMinter is IMinter {
     token = IUnderlying(IVe(ve_).token());
     ve = IVe(ve_);
     controller = controller_;
+    treasury = msg.sender;
+    nftStakingContract = msg.sender;
     activePeriod = (block.timestamp + (warmingUpPeriod * _WEEK)) / _WEEK * _WEEK;
   }
 
   /// @dev Mint initial supply to holders and lock it to ve token.
-  function initialize(
+  function premintAndLock(
     address[] memory claimants,
     uint[] memory amounts,
     uint totalAmount
   ) external {
     require(initializer == msg.sender, "Not initializer");
+    require(initialDistributionFinished == false, "Initial Distribution Finished");
     token.mint(address(this), totalAmount);
-    initialStubCirculation = totalAmount * _STUB_CIRCULATION / _STUB_CIRCULATION_DENOMINATOR;
     token.approve(address(ve), type(uint).max);
     uint sum;
     for (uint i = 0; i < claimants.length; i++) {
@@ -95,8 +90,44 @@ contract FldxMinter is IMinter {
       sum += amounts[i];
     }
     require(sum == totalAmount, "Wrong totalAmount");
-    initializer = address(0);
     activePeriod = (block.timestamp + _WEEK) / _WEEK * _WEEK;
+  }
+
+  /// @dev Mint initial supply to holders without lock.
+  function premint(
+    address[] memory claimants,
+    uint[] memory amounts,
+    uint totalAmount) external {
+    require(initializer == msg.sender, "Not initializer");
+    require(initialDistributionFinished == false, "Initial Distribution Finished");
+    uint sum;
+    for (uint i = 0; i < claimants.length; i++) {
+      token.mint(claimants[i], amounts[i]);
+      sum += amounts[i];
+    }
+    require(sum == totalAmount, "Wrong totalAmount");
+    activePeriod = (block.timestamp + _WEEK) / _WEEK * _WEEK;
+  }
+
+  /// @dev Disable future minting
+  function markInitialDistributionAsCompleted() external {
+    require(initializer == msg.sender, "Not initializer");
+    initialDistributionFinished = true;
+  }
+
+  function setTreasury(address _treasury) external {
+    require(msg.sender == treasury, "Not treasury");
+    pendingTreasury = _treasury;
+  }
+
+  function acceptTreasury() external {
+    require(msg.sender == pendingTreasury, "Not pending treasury");
+    treasury = pendingTreasury;
+  }
+
+  function setNftStakingContract(address _nftStakingContract) external {
+    require(msg.sender == initializer, "Not treasury");
+    nftStakingContract = _nftStakingContract;
   }
 
   function _veDist() internal view returns (IVeDist) {
@@ -121,29 +152,13 @@ contract FldxMinter is IMinter {
     - token.balanceOf(address(this));
   }
 
-  function _circulatingSupplyAdjusted() internal view returns (uint) {
-    // we need a stub supply for cover initial gap when huge amount of tokens was distributed and locked
-    return Math.max(_circulatingSupply(), initialStubCirculation);
-  }
-
-  /// @dev Emission calculation is 2% of available supply to mint adjusted by circulating / total supply
-  function calculateEmission() external view returns (uint) {
-    return _calculateEmission();
-  }
-
-  function _calculateEmission() internal view returns (uint) {
-    // use adjusted circulation supply for avoid first weeks gaps
-    // baseWeeklyEmission should be decrease every week
-    return baseWeeklyEmission * _circulatingSupplyAdjusted() / token.totalSupply();
-  }
-
   /// @dev Weekly emission takes the max of calculated (aka target) emission versus circulating tail end emission
   function weeklyEmission() external view returns (uint) {
     return _weeklyEmission();
   }
 
   function _weeklyEmission() internal view returns (uint) {
-    return Math.max(_calculateEmission(), _circulatingEmission());
+    return Math.max(baseWeeklyEmission, _circulatingEmission());
   }
 
   /// @dev Calculates tail end (infinity) emissions as 0.2% of total supply
@@ -152,7 +167,7 @@ contract FldxMinter is IMinter {
   }
 
   function _circulatingEmission() internal view returns (uint) {
-    return _circulatingSupply() * _TAIL_EMISSION / _TAIL_EMISSION_DENOMINATOR;
+    return _circulatingSupply() * _TAIL_EMISSION / PRECISION;
   }
 
   /// @dev Calculate inflation and adjust ve balances accordingly
@@ -160,33 +175,34 @@ contract FldxMinter is IMinter {
     return _calculateGrowth(_minted);
   }
 
+  /// @dev calculate inflation and adjust ve balances accordingly
   function _calculateGrowth(uint _minted) internal view returns (uint) {
-    return IUnderlying(address(ve)).totalSupply() * _minted / token.totalSupply();
+    uint _veTotal = IUnderlying(address(ve)).totalSupply();
+    uint _fldxTotal = token.totalSupply();
+    return
+    (((((_minted * _veTotal) / _fldxTotal) * _veTotal) / _fldxTotal) *
+    _veTotal) /
+    _fldxTotal /
+    2;
   }
 
   /// @dev Update period can only be called once per cycle (1 week)
   function updatePeriod() external override returns (uint) {
     uint _period = activePeriod;
     // only trigger if new week
-    if (block.timestamp >= _period + _WEEK && initializer == address(0)) {
+    if (block.timestamp >= _period + _WEEK && initialDistributionFinished) {
       _period = block.timestamp / _WEEK * _WEEK;
       activePeriod = _period;
       uint _weekly = _weeklyEmission();
       // slightly decrease weekly emission
       baseWeeklyEmission = baseWeeklyEmission
       * _WEEKLY_EMISSION_DECREASE
-      / _WEEKLY_EMISSION_DECREASE_DENOMINATOR;
-      // decrease stub supply every week if it higher than the real circulation
-      if (initialStubCirculation > _circulatingEmission()) {
-        initialStubCirculation = initialStubCirculation
-        * _INITIAL_CIRCULATION_DECREASE
-        / _INITIAL_CIRCULATION_DECREASE_DENOMINATOR;
-      }
+      / PRECISION;
 
       uint _growth = _calculateGrowth(_weekly);
-      uint _treasury = _weekly * _TREASURY_EMISSION / __TREASURY_EMISSION_DENOMINATOR;
-      uint _voter_amount = _weekly - _treasury;
-      uint _required = _growth + _weekly;
+      uint _treasury = (_weekly + _growth) * _TREASURY_EMISSION / PRECISION;
+      uint _nftstakers = (_weekly + _growth) * _NFT_STAKERS_EMISSION / PRECISION;
+      uint _required = _growth + _weekly + _treasury + _nftstakers;
       uint _balanceOf = token.balanceOf(address(this));
       if (_balanceOf < _required) {
         token.mint(address(this), _required - _balanceOf);
@@ -198,10 +214,11 @@ contract FldxMinter is IMinter {
       // checkpoint supply
       _veDist().checkpointTotalSupply();
 
-      token.approve(address(_voter()), _voter_amount);
-      _voter().notifyRewardAmount(_voter_amount);
+      token.approve(address(_voter()), _weekly);
+      _voter().notifyRewardAmount(_weekly);
 
       IERC20(address(token)).safeTransfer(treasury, _treasury);
+      IERC20(address(token)).safeTransfer(nftStakingContract, _nftstakers);
 
       emit Mint(msg.sender, _weekly, _growth, _circulatingSupply(), _circulatingEmission());
     }

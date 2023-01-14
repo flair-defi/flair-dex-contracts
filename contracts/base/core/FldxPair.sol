@@ -37,10 +37,10 @@ contract FldxPair is IERC20, IPair, Reentrancy {
   uint public immutable chainId;
 
   uint internal constant MINIMUM_LIQUIDITY = 10 ** 3;
-  /// @dev 0.05% swap fee
-  uint internal constant SWAP_FEE = 2000;
+  /// @dev 0.2% swap fee
+  uint internal constant SWAP_FEE = 500;
   /// @dev 50% of swap fee
-  uint internal constant TREASURY_FEE = 2;
+  uint internal constant TREASURY_FEE = 5;
   /// @dev Capture oracle reading every 30 minutes
   uint internal constant PERIOD_SIZE = 1800;
 
