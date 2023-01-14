@@ -38,8 +38,9 @@ contract FldxPair is IERC20, IPair, Reentrancy {
 
   uint internal constant MINIMUM_LIQUIDITY = 10 ** 3;
   /// @dev 0.2% swap fee
-  uint internal constant SWAP_FEE = 500;
-  /// @dev 50% of swap fee
+  uint internal constant VOLATILE_SWAP_FEE = 500;
+  uint internal constant STABLE_SWAP_FEE = 2500;
+  /// @dev 20% of swap fee
   uint internal constant TREASURY_FEE = 5;
   /// @dev Capture oracle reading every 30 minutes
   uint internal constant PERIOD_SIZE = 1800;
@@ -417,9 +418,9 @@ contract FldxPair is IERC20, IPair, Reentrancy {
     {// scope for reserve{0,1}Adjusted, avoids stack too deep errors
       (address _token0, address _token1) = (token0, token1);
       // accrue fees for token0 and move them out of pool
-      if (amount0In > 0) _update0(amount0In / SWAP_FEE);
+      if (amount0In > 0) _update0(amount0In / getFee());
       // accrue fees for token1 and move them out of pool
-      if (amount1In > 0) _update1(amount1In / SWAP_FEE);
+      if (amount1In > 0) _update1(amount1In / getFee());
       // since we removed tokens, we need to reconfirm balances,
       // can also simply use previous balance - amountIn/ SWAP_FEE,
       // but doing balanceOf again as safety check
@@ -431,6 +432,14 @@ contract FldxPair is IERC20, IPair, Reentrancy {
 
     _update(_balance0, _balance1, _reserve0, _reserve1);
     emit Swap(msg.sender, amount0In, amount1In, amount0Out, amount1Out, to);
+  }
+
+  function getFee() public view returns (uint) {
+    if (stable) {
+      return STABLE_SWAP_FEE;
+    } else {
+      return VOLATILE_SWAP_FEE;
+    }
   }
 
   /// @dev Force balances to match reserves
@@ -479,7 +488,7 @@ contract FldxPair is IERC20, IPair, Reentrancy {
   function getAmountOut(uint amountIn, address tokenIn) external view override returns (uint) {
     (uint _reserve0, uint _reserve1) = (reserve0, reserve1);
     // remove fee from amount received
-    amountIn -= amountIn / SWAP_FEE;
+    amountIn -= amountIn / getFee();
     return _getAmountOut(amountIn, tokenIn, _reserve0, _reserve1);
   }
 
