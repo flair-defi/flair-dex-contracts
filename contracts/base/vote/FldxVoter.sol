@@ -30,6 +30,7 @@ contract FldxVoter is IVoter, Reentrancy {
   /// @dev Rewards are released over 7 days
   uint internal constant DURATION = 7 days;
   address public minter;
+  address public governor;
 
   /// @dev Total voting weight
   uint public totalWeight;
@@ -75,6 +76,7 @@ contract FldxVoter is IVoter, Reentrancy {
     gaugeFactory = _gaugeFactory;
     bribeFactory = _bribeFactory;
     minter = msg.sender;
+    governor = msg.sender;
   }
 
   function initialize(address[] memory _tokens, address _minter) external {
@@ -83,6 +85,11 @@ contract FldxVoter is IVoter, Reentrancy {
       _whitelist(_tokens[i]);
     }
     minter = _minter;
+  }
+
+  function setGovernor(address _governor) public {
+    require(msg.sender == governor);
+    governor = _governor;
   }
 
   /// @dev Amount of tokens required to be hold for whitelisting.
@@ -189,7 +196,7 @@ contract FldxVoter is IVoter, Reentrancy {
   function whitelist(address _token, uint _tokenId) external {
     require(_tokenId > 0, "!token");
     require(msg.sender == IERC721(ve).ownerOf(_tokenId), "!owner");
-    require(IVe(ve).balanceOfNFT(_tokenId) > _listingFee(), "!power");
+    require((IVe(ve).balanceOfNFT(_tokenId) > _listingFee()) || msg.sender == governor, "!power");
     _whitelist(_token);
   }
 
@@ -203,7 +210,7 @@ contract FldxVoter is IVoter, Reentrancy {
   function registerRewardToken(address _token, address _gaugeOrBribe, uint _tokenId) external {
     require(_tokenId > 0, "!token");
     require(msg.sender == IERC721(ve).ownerOf(_tokenId), "!owner");
-    require(IVe(ve).balanceOfNFT(_tokenId) > _listingFee(), "!power");
+    require(IVe(ve).balanceOfNFT(_tokenId) > _listingFee() || msg.sender == governor, "!power");
     IMultiRewardsPool(_gaugeOrBribe).registerRewardToken(_token);
   }
 
@@ -211,7 +218,7 @@ contract FldxVoter is IVoter, Reentrancy {
   function removeRewardToken(address _token, address _gaugeOrBribe, uint _tokenId) external {
     require(_tokenId > 0, "!token");
     require(msg.sender == IERC721(ve).ownerOf(_tokenId), "!owner");
-    require(IVe(ve).balanceOfNFT(_tokenId) > _listingFee(), "!power");
+    require(IVe(ve).balanceOfNFT(_tokenId) > _listingFee() || msg.sender == governor, "!power");
     IMultiRewardsPool(_gaugeOrBribe).removeRewardToken(_token);
   }
 
