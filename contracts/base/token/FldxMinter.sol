@@ -126,7 +126,7 @@ contract FldxMinter is IMinter {
   }
 
   function setNftStakingContract(address _nftStakingContract) external {
-    require(msg.sender == initializer, "Not treasury");
+    require(msg.sender == initializer, "Not initializer");
     nftStakingContract = _nftStakingContract;
   }
 
