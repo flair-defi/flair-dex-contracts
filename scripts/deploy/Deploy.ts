@@ -165,6 +165,9 @@ export class Deploy {
     minterClaimants: string[],
     minterClaimantsAmounts: BigNumber[],
     minterSum: BigNumber,
+    veMinterClaimants: string[],
+    veMinterClaimantsAmounts: BigNumber[],
+    veMinterSum: BigNumber,
     warmingUpPeriod = 2
   ) {
     const [baseFactory, router, treasury] = await Deploy.deployDex(signer, networkToken);
@@ -185,6 +188,9 @@ export class Deploy {
       minterClaimants,
       minterClaimantsAmounts,
       minterSum,
+      veMinterClaimants,
+      veMinterClaimantsAmounts,
+      veMinterSum,
       baseFactory.address,
       warmingUpPeriod,
     );
@@ -224,6 +230,9 @@ export class Deploy {
     minterClaimants: string[],
     minterClaimantsAmounts: BigNumber[],
     minterSum: BigNumber,
+    veMinterClaimants: string[],
+    veMinterClaimantsAmounts: BigNumber[],
+    veMinterSum: BigNumber,
     baseFactory: string,
     warmingUpPeriod: number,
   ) {
@@ -246,10 +255,16 @@ export class Deploy {
     await Misc.runAndWait(() => controller.setVoter(voter.address));
 
     await Misc.runAndWait(() => voter.initialize(voterTokens, minter.address));
-    await Misc.runAndWait(() => minter.initialize(
+    await Misc.runAndWait(() => minter.premint(
       minterClaimants,
       minterClaimantsAmounts,
       minterSum
+    ));
+
+    await Misc.runAndWait(() => minter.premintAndLock(
+        veMinterClaimants,
+        veMinterClaimantsAmounts,
+        veMinterSum
     ));
 
     return [

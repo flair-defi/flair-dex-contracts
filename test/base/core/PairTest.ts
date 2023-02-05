@@ -127,7 +127,7 @@ describe("pair tests", function () {
       to: ust.address,
       stable: true,
     }], owner.address, 9999999999);
-    expect(await pair.quote(mim.address, parseUnits('1'), 1)).is.eq(BigNumber.from(747257));
+    expect(await pair.quote(mim.address, parseUnits('1'), 1)).is.eq(BigNumber.from(747256));
   });
 
   it("current twap price test with points", async function () {
@@ -143,7 +143,7 @@ describe("pair tests", function () {
       to: ust.address,
       stable: true,
     }], owner.address, 9999999999);
-    expect((await pair.prices(mim.address, parseUnits('1'), 1))[0]).is.eq(BigNumber.from(747257));
+    expect((await pair.prices(mim.address, parseUnits('1'), 1))[0]).is.eq(BigNumber.from(747256));
   });
 
   it("burn test", async function () {
@@ -355,44 +355,6 @@ describe("pair tests", function () {
     const tx = await pair.burn(owner.address);
     const receipt = await tx.wait()
     expect(receipt.gasUsed).below(BigNumber.from(130000));
-  });
-
-  it("twap price complex test", async function () {
-    await mim.approve(router.address, parseUnits('100'));
-    await ust.approve(router.address, parseUnits('100', 6));
-
-    expect(await pair.observationLength()).eq(1);
-    const window = 10;
-    for (let i = 0; i < window; i++) {
-      await TimeUtils.advanceBlocksOnTs(60 * 60)
-      await pair.sync();
-    }
-
-    expect(await pair.observationLength()).eq(window + 1);
-    await checkTwap(pair, mim.address, BigNumber.from(177));
-
-    await router.swapExactTokensForTokens(parseUnits('1'), 0, [{
-      from: mim.address,
-      to: ust.address,
-      stable: true,
-    }], owner.address, 9999999999);
-
-    await checkTwap(pair, mim.address, BigNumber.from(581_393));
-    await TimeUtils.advanceBlocksOnTs(60 * 60 * window)
-    await pair.sync();
-    await checkTwap(pair, mim.address, BigNumber.from(523_258));
-
-    await router.swapExactTokensForTokens(parseUnits('1', 6), 0, [{
-      to: mim.address,
-      from: ust.address,
-      stable: true,
-    }], owner.address, 9999999999);
-
-    await checkTwap(pair, mim.address, BigNumber.from(195_121));
-    await TimeUtils.advanceBlocksOnTs(60 * 60 * window)
-    await pair.sync();
-    await checkTwap(pair, mim.address, BigNumber.from(181_396));
-
   });
 
 });

@@ -11,7 +11,7 @@ const voterTokens = [
   "0xcb4aA0C195100297a7A845832F2b4e6C743D8756",
   "0xDD437EbC9a0373e426CEF84680cc06Cb7d1F1645",
   "0x6782D826c0627e33980aF038dCa09cf7CDb0E6a2",
-  TestnetAddresses.FLR_TOKEN
+  TestnetAddresses.WETH
 ];
 
 const claimants = [
@@ -47,8 +47,11 @@ async function main() {
     minter,
   ] = await Deploy.deployFldxSystem(
     signer,
-    TestnetAddresses.FLR_TOKEN,
+    TestnetAddresses.WETH,
     voterTokens,
+    claimants,
+    claimantsAmounts,
+    minterMax,
     claimants,
     claimantsAmounts,
     minterMax,

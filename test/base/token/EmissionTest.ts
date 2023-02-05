@@ -57,11 +57,14 @@ describe("emission tests", function () {
 
     core = await Deploy.deployCore(
       owner,
-      TestnetAddresses.FLR_TOKEN,
-      [TestnetAddresses.FLR_TOKEN, ust.address, mim.address, dai.address],
+      TestnetAddresses.WETH,
+      [TestnetAddresses.WETH, ust.address, mim.address, dai.address],
       [owner.address, owner2.address],
       [amount100At18, amount100At18],
-      amount100At18.mul(2)
+      amount100At18.mul(2),
+        [owner.address, owner2.address],
+        [amount100At18, amount100At18],
+        amount100At18.mul(2)
     );
 
     // -------------- create pairs ---------------------
@@ -146,6 +149,7 @@ describe("emission tests", function () {
 
     expect(await core.token.balanceOf(core.minter.address)).is.eq(0);
     // not exact amount coz veFLDX balance fluctuation during time
+
     TestHelper.closer(await core.token.balanceOf(core.veDist.address), parseUnits('188000'), parseUnits('3000'));
     TestHelper.closer(await core.token.balanceOf(core.voter.address), parseUnits('2000000'), parseUnits('0'));
   });
@@ -255,7 +259,10 @@ async function emissionLoop(
     [wmatic.address, ust.address, mim.address],
     [owner.address],
     [initial],
-    initial
+    initial,
+      [owner.address],
+      [initial],
+      initial
   );
   const pair = await TestHelper.addLiquidity(
     core.factory,

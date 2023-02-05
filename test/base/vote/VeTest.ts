@@ -53,8 +53,8 @@ describe("ve tests", function () {
 
     core = await Deploy.deployCore(
       owner,
-      TestnetAddresses.FLR_TOKEN,
-      [TestnetAddresses.FLR_TOKEN, ust.address, mim.address, dai.address],
+      TestnetAddresses.WETH,
+      [TestnetAddresses.WETH, ust.address, mim.address, dai.address],
       [owner.address, owner2.address],
       [parseUnits('100'), parseUnits('100')],
       parseUnits('200')
