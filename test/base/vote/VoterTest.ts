@@ -71,6 +71,9 @@ describe("voter tests", function () {
       [wmatic.address, ust.address, mim.address, dai.address],
       [owner.address, owner2.address, owner4.address],
       [parseUnits('100'), parseUnits('100'), BigNumber.from(10)],
+        parseUnits('200').add(10),
+        [owner.address, owner2.address, owner4.address],
+        [parseUnits('100'), parseUnits('100'), BigNumber.from(10)],
       parseUnits('200').add(10)
     );
 

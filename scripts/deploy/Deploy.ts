@@ -267,6 +267,8 @@ export class Deploy {
         veMinterSum
     ));
 
+    await Misc.runAndWait(() => minter.markInitialDistributionAsCompleted());
+
     return [
       controller,
       token,

@@ -7,7 +7,7 @@ import "../../interface/IERC20.sol";
 contract Fldx is IERC20 {
 
   string public constant symbol = "FLDX";
-  string public constant name = "Flares Dex Token";
+  string public constant name = "Flair Dex Token";
   uint8 public constant decimals = 18;
   uint public override totalSupply = 0;
 

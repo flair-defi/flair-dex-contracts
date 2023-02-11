@@ -10,13 +10,13 @@ import {Controller, Multicall2} from "../../../typechain";
 async function addLiquidity() {
 
     const Router = await ethers.getContractFactory("FldxRouter01");
-    const router = await Router.attach("0xf36E4600B7ae0554781ed44A50f866086ceF3520");
+    const router = await Router.attach("0xf37088c9393bF3fE4743C161681570331B65C69A");
     const deadline = "" + moment().add(600, "seconds").unix();
 
     const Token = await ethers.getContractFactory("Token");
 
-    const mim = await Token.attach("0x779d4D3A8B0E75219E653Ab310DD76B01333e534");
-    const usdt = await Token.attach("0xDD437EbC9a0373e426CEF84680cc06Cb7d1F1645");
+    const mim = await Token.attach("0xa5832D975070EDADD68Bdbba2b21E327417312Df");
+    const usdt = await Token.attach("0x6bf11Da741e83f7D44D7fb04233397384587BcAf");
 
     await Misc.runAndWait(() => mim.approve(router.address, "10000000000000000000000000"));
     await Misc.runAndWait(() => usdt.approve(router.address, "1000000000000000000"));
@@ -56,7 +56,22 @@ async function addLiquidityMATIC() {
     ));
 }
 
-addLiquidity()
+async function findDetails() {
+    const Factory = await ethers.getContractFactory("FldxFactory");
+    const contract = await Factory.attach("0xdFF63E319f1FF3F99A58E975924105c59cF07Fc3");
+    const txReceipt = await contract.provider.getTransactionReceipt("0xe2ac5f4128005d18756acc0808b73fbeee9b1f0f2e12ad5d63e48c6574dd2140");
+    console.log(txReceipt.blockNumber);
+}
+
+async function updatePeriod() {
+    const FldxMinter = await ethers.getContractFactory("FldxMinter");
+    const contract = await FldxMinter.attach("0x03232D934D18E2369AFc63e7CB0A5EEe72EE65D9");
+
+    const response = await contract.updatePeriod();
+    console.log(response);
+}
+
+updatePeriod()
     .then(() => process.exit(0))
     .catch(error => {
         console.error(error);
