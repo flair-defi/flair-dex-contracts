@@ -71,7 +71,45 @@ async function updatePeriod() {
     console.log(response);
 }
 
-updatePeriod()
+async function airdrop() {
+    const airdropAddresses = [
+        "0x6A60D50fd2DcacA4e80FeE92670512E008C03026",
+        "0x02128783083CAc9631201b6c2A26b5a2ccAB0AFc",
+        "0x59422340FDf7f8D9190f638740598D3428D15169",
+        "0xbcF41a27C4C1eE63dF5798E71c1a17b70e5b1077",
+        "0xD56DbE3206d4e56e052B2Bb96A342c06f5b3ef32",
+        "0xEeDc763c7369AD976455fa6E0b62b1B4f743Edb8",
+        "0x01D2862DA9d4fD9542D60bf9F769888435707176",
+        "0x3655B7ffEe4d8C64c3Bf7F6332A110Dce74Abeb4",
+        "0xAcedFC1ED2063249f6a5A4A98F375C3900d62046",
+        "0x7A92502c0dD2fC77532021f759A7DB2e0f966cf9",
+        "0x086A8184c9FbfB66D1eDf2406a5d20576911f5Fe"
+    ]
+
+    const amount = "50000000";
+    const fldxAmount = "50000000000000000000";
+
+    const usdc = await ethers.getContractFactory("Token");
+    const usdcContract = await usdc.attach("0x5F38e748AeaBA58D54C1f6456118f974fE5dB0EF");
+
+    const usdt = await ethers.getContractFactory("Token");
+    const usdtContract = await usdt.attach("0x6bf11Da741e83f7D44D7fb04233397384587BcAf")
+
+    const fldx = await ethers.getContractFactory("Fldx");
+    const fldxContract = await fldx.attach("0x6A70C6c2a246B4ef170e8DD5eE3f2E965afAC265")
+
+    for (let i=0; i < airdropAddresses.length; i++) {
+        const address = airdropAddresses[i];
+        await Misc.runAndWait(() => usdcContract.transfer(address, amount));
+        console.log("Airdropped usdc:", address);
+        await Misc.runAndWait(() => usdtContract.transfer(address, amount));
+        console.log("Usdt Airdropped:", address);
+        await Misc.runAndWait(() => fldxContract.transfer(address, fldxAmount));
+        console.log("FLDX Airdropped:", address)
+    }
+}
+
+airdrop()
     .then(() => process.exit(0))
     .catch(error => {
         console.error(error);
