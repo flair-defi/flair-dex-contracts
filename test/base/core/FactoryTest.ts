@@ -47,13 +47,28 @@ describe("factory tests", function () {
     expect(await factory.pauser()).is.eq(owner2.address);
   });
 
+  it("set feeManager", async function() {
+    await factory.setFeeManager(owner2.address);
+    await factory.connect(owner2).acceptFeeManager();
+    expect(await factory.feeManager()).is.eq(owner2.address);
+  });
+
   it("set pauser only from pauser", async function () {
     await expect(factory.connect(owner2).setPauser(owner2.address)).revertedWith("Not pauser");
   });
 
-  it("accept pauser only from pending pauser", async function () {
+  it("accept pauser only from existing pauser", async function () {
     await factory.setPauser(owner2.address);
     await expect(factory.connect(owner).acceptPauser()).revertedWith("Not pending pauser");
+  });
+
+  it("set feeManager only from existing feeManager", async function () {
+    await expect(factory.connect(owner2).setFeeManager(owner2.address)).revertedWith("not fee manager");
+  });
+
+  it("accept feeManager only from pending feeManager", async function () {
+    await factory.setPauser(owner2.address);
+    await expect(factory.connect(owner).acceptFeeManager()).revertedWith("not pending fee manager");
   });
 
   it("pause", async function () {
@@ -65,8 +80,36 @@ describe("factory tests", function () {
     await expect(factory.connect(owner2).setPause(true)).revertedWith("Not pauser");
   });
 
+  it("set fee stable", async function () {
+    await factory.setFee(true, 10);
+    expect(await factory.getFees(true)).is.eq(10);
+    expect(await factory.getFees(false)).is.eq(20);
+  });
+
+  it("set fee volatile", async function () {
+    await factory.setFee(false, 30);
+    expect(await factory.getFees(false)).is.eq(30);
+    expect(await factory.getFees(true)).is.eq(4);
+  });
+
+  it("set fee only from feeManager", async function() {
+    await expect(factory.connect(owner2).setFee(true, 5)).revertedWith("not fee manager");
+  });
+
+  it("set fees to zero", async function() {
+    await expect(factory.setFee(true, 0)).revertedWith("fee must be nonzero");
+  });
+
+  it("set stable fees too high", async function() {
+    await expect(factory.setFee(true, 100)).revertedWith("fee too high");
+  });
+
+  it("set volatile fees too high", async function() {
+    await expect(factory.setFee(true, 100)).revertedWith("fee too high");
+  });
+
   it("create pair revert with the same tokens", async function () {
-    await expect(factory.createPair(Misc.ZERO_ADDRESS, Misc.ZERO_ADDRESS, true)).revertedWith('IDENTICAL_ADDRESSES');
+    await expect(factory.createPair(wmatic.address, wmatic.address, true)).revertedWith('IDENTICAL_ADDRESSES');
   });
 
   it("create pair revert with the zero token", async function () {

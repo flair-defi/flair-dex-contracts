@@ -172,11 +172,15 @@ describe("pair tests", function () {
   });
 
   it("sync test", async function () {
-    await mim.transfer(pair.address, parseUnits('0.001'));
-    await ust.transfer(pair.address, parseUnits('0.001', 6));
+    const initialReserve0 = await pair.reserve0();
+    const initialReserve1 = await pair.reserve1();
+    const amount0 = parseUnits('0.001');
+    const amount1 = parseUnits('0.001', 6);
+    await mim.transfer(pair.address, amount0);
+    await ust.transfer(pair.address, amount1);
     await pair.sync();
-    expect(await pair.reserve0()).is.not.eq(0);
-    expect(await pair.reserve1()).is.not.eq(0);
+    expect(await pair.reserve0()).is.eq(initialReserve0.add(amount0));
+    expect(await pair.reserve1()).is.eq(initialReserve1.add(amount1));
   });
 
   it("metadata test", async function () {
@@ -216,6 +220,15 @@ describe("pair tests", function () {
   it("swap on pause test", async function () {
     await factory.setPause(true);
     await expect(pair2.swap(1, 1, owner.address, '0x')).revertedWith('PAUSE');
+  });
+
+  it("set partner feeManager", async function () {
+    await pair2.connect(owner).setPartner(owner3.address);
+    await expect(await pair2.partner()).eq(owner3.address);
+  });
+
+  it("set partner not feeManager", async function () {
+    await expect(pair2.connect(owner3).setPartner(owner3.address)).revertedWith('not fee manager');
   });
 
   it("insufficient output amount", async function () {

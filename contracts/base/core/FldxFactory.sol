@@ -11,6 +11,16 @@ contract FldxFactory is IFactory {
   address public pauser;
   address public pendingPauser;
   address public immutable override treasury;
+  address public feeManager;
+  address public pendingFeeManager;
+
+  uint256 public stableFee;
+  uint256 public volatileFee;
+
+  /// @dev 0.4% max volatile swap fees
+  uint internal constant MAX_VOLATILE_SWAP_FEE = 40;
+  /// @dev 0.1% max stable swap fee
+  uint internal constant MAX_STABLE_SWAP_FEE = 10;
 
   mapping(address => mapping(address => mapping(bool => address))) public override getPair;
   address[] public allPairs;
@@ -31,8 +41,11 @@ contract FldxFactory is IFactory {
 
   constructor(address _treasury) {
     pauser = msg.sender;
+    feeManager = msg.sender;
     isPaused = false;
     treasury = _treasury;
+    volatileFee = 20;
+    stableFee = 4;
   }
 
   function allPairsLength() external view returns (uint) {
@@ -49,9 +62,40 @@ contract FldxFactory is IFactory {
     pauser = pendingPauser;
   }
 
+  function setFeeManager(address _feeManager) external {
+    require(msg.sender == feeManager, 'not fee manager');
+    pendingFeeManager = _feeManager;
+  }
+
+  function acceptFeeManager() external {
+    require(msg.sender == pendingFeeManager, 'not pending fee manager');
+    feeManager = pendingFeeManager;
+  }
+
   function setPause(bool _state) external {
     require(msg.sender == pauser, "FldxFactory: Not pauser");
     isPaused = _state;
+  }
+
+  function setFee(bool _stable, uint256 _fee) external {
+    require(msg.sender == feeManager, 'not fee manager');
+    require(_fee != 0, 'fee must be nonzero');
+
+    if (_stable) {
+      require(_fee <= MAX_STABLE_SWAP_FEE, 'fee too high');
+      stableFee = _fee;
+    } else {
+      require(_fee <= MAX_VOLATILE_SWAP_FEE, 'fee too high');
+      volatileFee = _fee;
+    }
+  }
+
+  function getFees(bool _stable) external view returns (uint) {
+    if (_stable) {
+      return stableFee;
+    } else {
+      return volatileFee;
+    }
   }
 
   function pairCodeHash() external pure override returns (bytes32) {
