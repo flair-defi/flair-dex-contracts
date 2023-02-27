@@ -5,7 +5,7 @@ pragma solidity ^0.8.13;
 import "../../lib/Math.sol";
 import "../../lib/SafeERC20.sol";
 import "../../interface/IERC20.sol";
-import "../../interface/IWMATIC.sol";
+import "../../interface/IWETH.sol";
 import "../../interface/IPair.sol";
 import "../../interface/IFactory.sol";
 
@@ -19,7 +19,7 @@ contract FldxRouter01 {
   }
 
   address public immutable factory;
-  IWMATIC public immutable wmatic;
+  IWETH public immutable weth;
   uint internal constant MINIMUM_LIQUIDITY = 10 ** 3;
   bytes32 immutable pairCodeHash;
 
@@ -28,15 +28,15 @@ contract FldxRouter01 {
     _;
   }
 
-  constructor(address _factory, address _wmatic) {
+  constructor(address _factory, address _weth) {
     factory = _factory;
     pairCodeHash = IFactory(_factory).pairCodeHash();
-    wmatic = IWMATIC(_wmatic);
+    weth = IWETH(_weth);
   }
 
   receive() external payable {
     // only accept ETH via fallback from the WETH contract
-    require(msg.sender == address(wmatic), "FldxRouter: NOT_WMATIC");
+    require(msg.sender == address(weth), "FldxRouter: NOT_WETH");
   }
 
   function sortTokens(address tokenA, address tokenB) external pure returns (address token0, address token1) {
@@ -243,31 +243,31 @@ contract FldxRouter01 {
     liquidity = IPair(pair).mint(to);
   }
 
-  function addLiquidityMATIC(
+  function addLiquidityETH(
     address token,
     bool stable,
     uint amountTokenDesired,
     uint amountTokenMin,
-    uint amountMATICMin,
+    uint amountETHMin,
     address to,
     uint deadline
-  ) external payable ensure(deadline) returns (uint amountToken, uint amountMATIC, uint liquidity) {
-    (amountToken, amountMATIC) = _addLiquidity(
+  ) external payable ensure(deadline) returns (uint amountToken, uint amountETH, uint liquidity) {
+    (amountToken, amountETH) = _addLiquidity(
       token,
-      address(wmatic),
+      address(weth),
       stable,
       amountTokenDesired,
       msg.value,
       amountTokenMin,
-      amountMATICMin
+      amountETHMin
     );
-    address pair = _pairFor(token, address(wmatic), stable);
+    address pair = _pairFor(token, address(weth), stable);
     IERC20(token).safeTransferFrom(msg.sender, pair, amountToken);
-    wmatic.deposit{value : amountMATIC}();
-    assert(wmatic.transfer(pair, amountMATIC));
+    weth.deposit{value : amountETH}();
+    assert(weth.transfer(pair, amountETH));
     liquidity = IPair(pair).mint(to);
     // refund dust eth, if any
-    if (msg.value > amountMATIC) _safeTransferMATIC(msg.sender, msg.value - amountMATIC);
+    if (msg.value > amountETH) _safeTransferETH(msg.sender, msg.value - amountETH);
   }
 
   // **** REMOVE LIQUIDITY ****
@@ -314,48 +314,48 @@ contract FldxRouter01 {
     require(amountB >= amountBMin, 'FldxRouter: INSUFFICIENT_B_AMOUNT');
   }
 
-  function removeLiquidityMATIC(
+  function removeLiquidityETH(
     address token,
     bool stable,
     uint liquidity,
     uint amountTokenMin,
-    uint amountMATICMin,
+    uint amountETHMin,
     address to,
     uint deadline
-  ) external returns (uint amountToken, uint amountMATIC) {
-    return _removeLiquidityMATIC(
+  ) external returns (uint amountToken, uint amountETH) {
+    return _removeLiquidityETH(
       token,
       stable,
       liquidity,
       amountTokenMin,
-      amountMATICMin,
+      amountETHMin,
       to,
       deadline
     );
   }
 
-  function _removeLiquidityMATIC(
+  function _removeLiquidityETH(
     address token,
     bool stable,
     uint liquidity,
     uint amountTokenMin,
-    uint amountMATICMin,
+    uint amountETHMin,
     address to,
     uint deadline
-  ) internal ensure(deadline) returns (uint amountToken, uint amountMATIC) {
-    (amountToken, amountMATIC) = _removeLiquidity(
+  ) internal ensure(deadline) returns (uint amountToken, uint amountETH) {
+    (amountToken, amountETH) = _removeLiquidity(
       token,
-      address(wmatic),
+      address(weth),
       stable,
       liquidity,
       amountTokenMin,
-      amountMATICMin,
+      amountETHMin,
       address(this),
       deadline
     );
     IERC20(token).safeTransfer(to, amountToken);
-    wmatic.withdraw(amountMATIC);
-    _safeTransferMATIC(to, amountMATIC);
+    weth.withdraw(amountETH);
+    _safeTransferETH(to, amountETH);
   }
 
   function removeLiquidityWithPermit(
@@ -378,23 +378,23 @@ contract FldxRouter01 {
     (amountA, amountB) = _removeLiquidity(tokenA, tokenB, stable, liquidity, amountAMin, amountBMin, to, deadline);
   }
 
-  function removeLiquidityMATICWithPermit(
+  function removeLiquidityETHWithPermit(
     address token,
     bool stable,
     uint liquidity,
     uint amountTokenMin,
-    uint amountMATICMin,
+    uint amountETHMin,
     address to,
     uint deadline,
     bool approveMax, uint8 v, bytes32 r, bytes32 s
-  ) external returns (uint amountToken, uint amountMATIC) {
-    address pair = _pairFor(token, address(wmatic), stable);
+  ) external returns (uint amountToken, uint amountETH) {
+    address pair = _pairFor(token, address(weth), stable);
     uint value = approveMax ? type(uint).max : liquidity;
     IPair(pair).permit(msg.sender, address(this), value, deadline, v, r, s);
-    (amountToken, amountMATIC) = _removeLiquidityMATIC(token, stable, liquidity, amountTokenMin, amountMATICMin, to, deadline);
+    (amountToken, amountETH) = _removeLiquidityETH(token, stable, liquidity, amountTokenMin, amountETHMin, to, deadline);
   }
 
-  function removeLiquidityMATICSupportingFeeOnTransferTokens(
+  function removeLiquidityETHSupportingFeeOnTransferTokens(
     address token,
     bool stable,
     uint liquidity,
@@ -403,7 +403,7 @@ contract FldxRouter01 {
     address to,
     uint deadline
   ) external returns (uint amountToken, uint amountFTM) {
-    return _removeLiquidityMATICSupportingFeeOnTransferTokens(
+    return _removeLiquidityETHSupportingFeeOnTransferTokens(
       token,
       stable,
       liquidity,
@@ -414,7 +414,7 @@ contract FldxRouter01 {
     );
   }
 
-  function _removeLiquidityMATICSupportingFeeOnTransferTokens(
+  function _removeLiquidityETHSupportingFeeOnTransferTokens(
     address token,
     bool stable,
     uint liquidity,
@@ -425,7 +425,7 @@ contract FldxRouter01 {
   ) internal ensure(deadline) returns (uint amountToken, uint amountFTM) {
     (amountToken, amountFTM) = _removeLiquidity(
       token,
-      address(wmatic),
+      address(weth),
       stable,
       liquidity,
       amountTokenMin,
@@ -434,11 +434,11 @@ contract FldxRouter01 {
       deadline
     );
     IERC20(token).safeTransfer(to, IERC20(token).balanceOf(address(this)));
-    wmatic.withdraw(amountFTM);
-    _safeTransferMATIC(to, amountFTM);
+    weth.withdraw(amountFTM);
+    _safeTransferETH(to, amountFTM);
   }
 
-  function removeLiquidityMATICWithPermitSupportingFeeOnTransferTokens(
+  function removeLiquidityETHWithPermitSupportingFeeOnTransferTokens(
     address token,
     bool stable,
     uint liquidity,
@@ -448,10 +448,10 @@ contract FldxRouter01 {
     uint deadline,
     bool approveMax, uint8 v, bytes32 r, bytes32 s
   ) external returns (uint amountToken, uint amountFTM) {
-    address pair = _pairFor(token, address(wmatic), stable);
+    address pair = _pairFor(token, address(weth), stable);
     uint value = approveMax ? type(uint).max : liquidity;
     IPair(pair).permit(msg.sender, address(this), value, deadline, v, r, s);
-    (amountToken, amountFTM) = _removeLiquidityMATICSupportingFeeOnTransferTokens(
+    (amountToken, amountFTM) = _removeLiquidityETHSupportingFeeOnTransferTokens(
       token, stable, liquidity, amountTokenMin, amountFTMMin, to, deadline
     );
   }
@@ -526,34 +526,34 @@ contract FldxRouter01 {
     _swap(amounts, routes, to);
   }
 
-  function swapExactMATICForTokens(uint amountOutMin, Route[] calldata routes, address to, uint deadline)
+  function swapExactETHForTokens(uint amountOutMin, Route[] calldata routes, address to, uint deadline)
   external
   payable
   ensure(deadline)
   returns (uint[] memory amounts)
   {
-    require(routes[0].from == address(wmatic), 'FldxRouter: INVALID_PATH');
+    require(routes[0].from == address(weth), 'FldxRouter: INVALID_PATH');
     amounts = _getAmountsOut(msg.value, routes);
     require(amounts[amounts.length - 1] >= amountOutMin, 'FldxRouter: INSUFFICIENT_OUTPUT_AMOUNT');
-    wmatic.deposit{value : amounts[0]}();
-    assert(wmatic.transfer(_pairFor(routes[0].from, routes[0].to, routes[0].stable), amounts[0]));
+    weth.deposit{value : amounts[0]}();
+    assert(weth.transfer(_pairFor(routes[0].from, routes[0].to, routes[0].stable), amounts[0]));
     _swap(amounts, routes, to);
   }
 
-  function swapExactTokensForMATIC(uint amountIn, uint amountOutMin, Route[] calldata routes, address to, uint deadline)
+  function swapExactTokensForETH(uint amountIn, uint amountOutMin, Route[] calldata routes, address to, uint deadline)
   external
   ensure(deadline)
   returns (uint[] memory amounts)
   {
-    require(routes[routes.length - 1].to == address(wmatic), 'FldxRouter: INVALID_PATH');
+    require(routes[routes.length - 1].to == address(weth), 'FldxRouter: INVALID_PATH');
     amounts = _getAmountsOut(amountIn, routes);
     require(amounts[amounts.length - 1] >= amountOutMin, 'FldxRouter: INSUFFICIENT_OUTPUT_AMOUNT');
     IERC20(routes[0].from).safeTransferFrom(
       msg.sender, _pairFor(routes[0].from, routes[0].to, routes[0].stable), amounts[0]
     );
     _swap(amounts, routes, address(this));
-    wmatic.withdraw(amounts[amounts.length - 1]);
-    _safeTransferMATIC(to, amounts[amounts.length - 1]);
+    weth.withdraw(amounts[amounts.length - 1]);
+    _safeTransferETH(to, amounts[amounts.length - 1]);
   }
 
   function swapExactTokensForTokensSupportingFeeOnTransferTokens(
@@ -576,7 +576,7 @@ contract FldxRouter01 {
     );
   }
 
-  function swapExactMATICForTokensSupportingFeeOnTransferTokens(
+  function swapExactETHForTokensSupportingFeeOnTransferTokens(
     uint amountOutMin,
     Route[] calldata routes,
     address to,
@@ -586,10 +586,10 @@ contract FldxRouter01 {
   payable
   ensure(deadline)
   {
-    require(routes[0].from == address(wmatic), 'FldxRouter: INVALID_PATH');
+    require(routes[0].from == address(weth), 'FldxRouter: INVALID_PATH');
     uint amountIn = msg.value;
-    wmatic.deposit{value : amountIn}();
-    assert(wmatic.transfer(_pairFor(routes[0].from, routes[0].to, routes[0].stable), amountIn));
+    weth.deposit{value : amountIn}();
+    assert(weth.transfer(_pairFor(routes[0].from, routes[0].to, routes[0].stable), amountIn));
     uint balanceBefore = IERC20(routes[routes.length - 1].to).balanceOf(to);
     _swapSupportingFeeOnTransferTokens(routes, to);
     require(
@@ -598,7 +598,7 @@ contract FldxRouter01 {
     );
   }
 
-  function swapExactTokensForMATICSupportingFeeOnTransferTokens(
+  function swapExactTokensForETHSupportingFeeOnTransferTokens(
     uint amountIn,
     uint amountOutMin,
     Route[] calldata routes,
@@ -608,15 +608,15 @@ contract FldxRouter01 {
   external
   ensure(deadline)
   {
-    require(routes[routes.length - 1].to == address(wmatic), 'FldxRouter: INVALID_PATH');
+    require(routes[routes.length - 1].to == address(weth), 'FldxRouter: INVALID_PATH');
     IERC20(routes[0].from).safeTransferFrom(
       msg.sender, _pairFor(routes[0].from, routes[0].to, routes[0].stable), amountIn
     );
     _swapSupportingFeeOnTransferTokens(routes, address(this));
-    uint amountOut = IERC20(address(wmatic)).balanceOf(address(this));
+    uint amountOut = IERC20(address(weth)).balanceOf(address(this));
     require(amountOut >= amountOutMin, 'FldxRouter: INSUFFICIENT_OUTPUT_AMOUNT');
-    wmatic.withdraw(amountOut);
-    _safeTransferMATIC(to, amountOut);
+    weth.withdraw(amountOut);
+    _safeTransferETH(to, amountOut);
   }
 
   function UNSAFE_swapExactTokensForTokens(
@@ -630,7 +630,7 @@ contract FldxRouter01 {
     return amounts;
   }
 
-  function _safeTransferMATIC(address to, uint value) internal {
+  function _safeTransferETH(address to, uint value) internal {
     (bool success,) = to.call{value : value}(new bytes(0));
     require(success, 'FldxRouter: ETH_TRANSFER_FAILED');
   }
