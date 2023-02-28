@@ -108,6 +108,27 @@ describe("factory tests", function () {
     await expect(factory.setFee(true, 100)).revertedWith("fee too high");
   });
 
+  it("set treasury fees not feeManager", async function() {
+    await expect(factory.connect(owner2).setTreasuryFee(15)).revertedWith("not fee Manager");
+  });
+
+  it("set treasury fees as zero", async function() {
+    await expect(factory.setTreasuryFee(0)).revertedWith("fees must be nonzero'");
+  });
+
+  it("set treasury fees greater than max treasury fees", async function() {
+    await expect(factory.setTreasuryFee(100)).revertedWith("fees must be less than max treasury fees'");
+  });
+
+  it("set treasury fees success", async function() {
+    await expect(factory.setTreasuryFee(20));
+    await expect(await factory.treasuryFee()).eq(20);
+  });
+
+  it("set treasury fees not feeManager", async function() {
+    await expect(factory.connect(owner2).setTreasuryFee(15)).revertedWith("not fee Manager");
+  });
+
   it("create pair revert with the same tokens", async function () {
     await expect(factory.createPair(wmatic.address, wmatic.address, true)).revertedWith('IDENTICAL_ADDRESSES');
   });

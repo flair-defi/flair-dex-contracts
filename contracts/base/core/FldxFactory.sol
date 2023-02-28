@@ -16,11 +16,15 @@ contract FldxFactory is IFactory {
 
   uint256 public stableFee;
   uint256 public volatileFee;
+  uint256 public treasuryFee;
+  uint256 public partnerFee;
 
   /// @dev 0.4% max volatile swap fees
-  uint internal constant MAX_VOLATILE_SWAP_FEE = 40;
+  uint internal constant MAX_VOLATILE_SWAP_FEE = 50;
   /// @dev 0.1% max stable swap fee
-  uint internal constant MAX_STABLE_SWAP_FEE = 10;
+  uint internal constant MAX_STABLE_SWAP_FEE = 20;
+  /// @dev 20% max allowed treasury fee, percentage of total fee
+  uint internal constant MAX_TREASURY_FEE = 20;
 
   mapping(address => mapping(address => mapping(bool => address))) public override getPair;
   address[] public allPairs;
@@ -46,6 +50,8 @@ contract FldxFactory is IFactory {
     treasury = _treasury;
     volatileFee = 20;
     stableFee = 4;
+    treasuryFee = 10;
+    partnerFee = 3;
   }
 
   function allPairsLength() external view returns (uint) {
@@ -88,6 +94,13 @@ contract FldxFactory is IFactory {
       require(_fee <= MAX_VOLATILE_SWAP_FEE, 'fee too high');
       volatileFee = _fee;
     }
+  }
+
+  function setTreasuryFee(uint256 _fee) external {
+    require(msg.sender == feeManager, 'not fee Manager');
+    require(_fee != 0, 'fees must be nonzero');
+    require(_fee <= MAX_TREASURY_FEE, 'fees must be less than max treasury fees');
+    treasuryFee = _fee;
   }
 
   function getFees(bool _stable) external view returns (uint) {
