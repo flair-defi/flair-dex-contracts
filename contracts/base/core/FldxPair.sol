@@ -37,10 +37,6 @@ contract FldxPair is IERC20, IPair, Reentrancy {
   uint public immutable chainId;
 
   uint internal constant MINIMUM_LIQUIDITY = 10 ** 3;
-  /// @dev 20% of swap fee
-  uint internal constant TREASURY_FEE = 16;
-  /// @dev 20% of swap fee
-  uint internal constant PARTNER_FEE = 4;
   /// @dev Capture oracle reading every 30 minutes
   uint internal constant PERIOD_SIZE = 1800;
 
@@ -172,8 +168,8 @@ contract FldxPair is IERC20, IPair, Reentrancy {
 
   /// @dev Accrue fees on token0
   function _update0(uint amount) internal {
-    uint toTreasury = (amount * TREASURY_FEE) / 10000;
-    uint toPartner = (amount * PARTNER_FEE) / 10000;
+    uint toTreasury = (amount * IFactory(factory).treasuryFee()) / 10000;
+    uint toPartner = (amount * IFactory(factory).partnerFee()) / 10000;
     uint toFees = amount - toTreasury - toPartner;
 
     // transfer the fees out to PairFees and Treasury
@@ -192,8 +188,8 @@ contract FldxPair is IERC20, IPair, Reentrancy {
 
   /// @dev Accrue fees on token1
   function _update1(uint amount) internal {
-    uint toTreasury = (amount * TREASURY_FEE) / 10000;
-    uint toPartner = (amount * PARTNER_FEE) / 10000;
+    uint toTreasury = (amount * IFactory(factory).treasuryFee()) / 10000;
+    uint toPartner = (amount * IFactory(factory).partnerFee()) / 10000;
     uint toFees = amount - toTreasury - toPartner;
 
     IERC20(token1).safeTransfer(treasury, toTreasury);
