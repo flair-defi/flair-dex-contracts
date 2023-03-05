@@ -162,12 +162,6 @@ export class Deploy {
     signer: SignerWithAddress,
     networkToken: string,
     voterTokens: string[],
-    minterClaimants: string[],
-    minterClaimantsAmounts: BigNumber[],
-    minterSum: BigNumber,
-    veMinterClaimants: string[],
-    veMinterClaimantsAmounts: BigNumber[],
-    veMinterSum: BigNumber,
     warmingUpPeriod = 2
   ) {
     const [baseFactory, router, treasury] = await Deploy.deployDex(signer, networkToken);
@@ -185,12 +179,6 @@ export class Deploy {
       signer,
       networkToken,
       voterTokens,
-      minterClaimants,
-      minterClaimantsAmounts,
-      minterSum,
-      veMinterClaimants,
-      veMinterClaimantsAmounts,
-      veMinterSum,
       baseFactory.address,
       warmingUpPeriod,
     );
@@ -227,12 +215,6 @@ export class Deploy {
     signer: SignerWithAddress,
     networkToken: string,
     voterTokens: string[],
-    minterClaimants: string[],
-    minterClaimantsAmounts: BigNumber[],
-    minterSum: BigNumber,
-    veMinterClaimants: string[],
-    veMinterClaimantsAmounts: BigNumber[],
-    veMinterSum: BigNumber,
     baseFactory: string,
     warmingUpPeriod: number,
   ) {
@@ -241,8 +223,6 @@ export class Deploy {
     const ve = await Deploy.deployVe(signer, token.address, controller.address);
     const gaugesFactory = await Deploy.deployGaugeFactory(signer);
     const bribesFactory = await Deploy.deployBribeFactory(signer);
-
-    await Misc.runAndWait(() => token.mint(signer.address,"1000000000000000000000"));
 
     const veDist = await Deploy.deployVeDist(signer, ve.address);
     const voter = await Deploy.deployFldxVoter(signer, ve.address, baseFactory, gaugesFactory.address, bribesFactory.address);
@@ -255,17 +235,6 @@ export class Deploy {
     await Misc.runAndWait(() => controller.setVoter(voter.address));
 
     await Misc.runAndWait(() => voter.initialize(voterTokens, minter.address));
-    await Misc.runAndWait(() => minter.premint(
-      minterClaimants,
-      minterClaimantsAmounts,
-      minterSum
-    ));
-
-    await Misc.runAndWait(() => minter.premintAndLock(
-        veMinterClaimants,
-        veMinterClaimantsAmounts,
-        veMinterSum
-    ));
 
     return [
       controller,

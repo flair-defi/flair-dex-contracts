@@ -30,12 +30,12 @@ contract Fldx is IERC20 {
   }
 
   function setMerkleClaim(address _merkleClaim) external {
-    require(msg.sender == minter);
+    require(msg.sender == minter, 'FLDX: Not Minter');
     merkleClaim = _merkleClaim;
   }
 
   function setMerkleNFTClaim(address _merkleNFTClaim) external {
-    require(msg.sender == minter);
+    require(msg.sender == minter, 'FLDX: Not Minter');
     merkleNFTClaim = _merkleNFTClaim;
   }
 
