@@ -57,6 +57,7 @@ contract FldxVoter is IVoter, Reentrancy {
   uint public index;
   mapping(address => uint) public supplyIndex;
   mapping(address => uint) public claimable;
+  mapping(uint => uint) public lastVoted;
 
   event GaugeCreated(address indexed gauge, address creator, address indexed bribe, address indexed pool);
   event Voted(address indexed voter, uint tokenId, int256 weight);
@@ -68,6 +69,12 @@ contract FldxVoter is IVoter, Reentrancy {
   event Attach(address indexed owner, address indexed gauge, uint tokenId);
   event Detach(address indexed owner, address indexed gauge, uint tokenId);
   event Whitelisted(address indexed whitelister, address indexed token);
+
+  modifier onlyNewEpoch(uint _tokenId) {
+    // ensure new epoch since last vote
+    require((block.timestamp / DURATION) * DURATION > lastVoted[_tokenId], "TOKEN_ALREADY_VOTED_THIS_EPOCH");
+    _;
+  }
 
   constructor(address _ve, address _factory, address _gaugeFactory, address _bribeFactory) {
     ve = _ve;
@@ -92,19 +99,10 @@ contract FldxVoter is IVoter, Reentrancy {
     governor = _governor;
   }
 
-  /// @dev Amount of tokens required to be hold for whitelisting.
-  function listingFee() external view returns (uint) {
-    return _listingFee();
-  }
-
-  /// @dev 20% of circulation supply.
-  function _listingFee() internal view returns (uint) {
-    return (IERC20(token).totalSupply() - IERC20(ve).totalSupply()) / 5;
-  }
-
   /// @dev Remove all votes for given tokenId.
-  function reset(uint _tokenId) external {
+  function reset(uint _tokenId) external onlyNewEpoch(_tokenId) {
     require(IVe(ve).isApprovedOrOwner(msg.sender, _tokenId), "!owner");
+    lastVoted[_tokenId] = block.timestamp;
     _reset(_tokenId);
     IVe(ve).abstain(_tokenId);
   }
@@ -186,17 +184,16 @@ contract FldxVoter is IVoter, Reentrancy {
   }
 
   /// @dev Vote for given pools using a vote power of given tokenId. Reset previous votes.
-  function vote(uint tokenId, address[] calldata _poolVote, int256[] calldata _weights) external {
+  function vote(uint tokenId, address[] calldata _poolVote, int256[] calldata _weights) external onlyNewEpoch(tokenId) {
     require(IVe(ve).isApprovedOrOwner(msg.sender, tokenId), "!owner");
     require(_poolVote.length == _weights.length, "!arrays");
+    lastVoted[tokenId] = block.timestamp;
     _vote(tokenId, _poolVote, _weights);
   }
 
   /// @dev Add token to whitelist. Only pools with whitelisted tokens can be added to gauge.
-  function whitelist(address _token, uint _tokenId) external {
-    require(_tokenId > 0, "!token");
-    require(msg.sender == IERC721(ve).ownerOf(_tokenId), "!owner");
-    require((IVe(ve).balanceOfNFT(_tokenId) > _listingFee()) || msg.sender == governor, "!power");
+  function whitelist(address _token) external {
+    require(msg.sender == governor, "!power");
     _whitelist(_token);
   }
 
@@ -207,18 +204,14 @@ contract FldxVoter is IVoter, Reentrancy {
   }
 
   /// @dev Add a token to a gauge/bribe as possible reward.
-  function registerRewardToken(address _token, address _gaugeOrBribe, uint _tokenId) external {
-    require(_tokenId > 0, "!token");
-    require(msg.sender == IERC721(ve).ownerOf(_tokenId), "!owner");
-    require(IVe(ve).balanceOfNFT(_tokenId) > _listingFee() || msg.sender == governor, "!power");
+  function registerRewardToken(address _token, address _gaugeOrBribe) external {
+    require(msg.sender == governor, "!power");
     IMultiRewardsPool(_gaugeOrBribe).registerRewardToken(_token);
   }
 
   /// @dev Remove a token from a gauge/bribe allowed rewards list.
-  function removeRewardToken(address _token, address _gaugeOrBribe, uint _tokenId) external {
-    require(_tokenId > 0, "!token");
-    require(msg.sender == IERC721(ve).ownerOf(_tokenId), "!owner");
-    require(IVe(ve).balanceOfNFT(_tokenId) > _listingFee() || msg.sender == governor, "!power");
+  function removeRewardToken(address _token, address _gaugeOrBribe) external {
+    require(msg.sender == governor, "!power");
     IMultiRewardsPool(_gaugeOrBribe).removeRewardToken(_token);
   }
 
