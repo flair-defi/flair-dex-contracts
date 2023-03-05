@@ -13,7 +13,7 @@ import chai from "chai";
 import {Deploy} from "../../../scripts/deploy/Deploy";
 import {TimeUtils} from "../../TimeUtils";
 import {TestHelper} from "../../TestHelper";
-import {TestnetAddresses} from "../../../scripts/addresses/TestnetAddresses";
+import {TestnetAddresses} from "../../../scripts/addresses/Addresses";
 import {parseUnits} from "ethers/lib/utils";
 import {CoreAddresses} from "../../../scripts/deploy/CoreAddresses";
 import {Misc} from "../../../scripts/Misc";

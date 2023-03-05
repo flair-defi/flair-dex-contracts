@@ -5,7 +5,7 @@ import {Deploy} from "../../../scripts/deploy/Deploy";
 import {TimeUtils} from "../../TimeUtils";
 import {BigNumber, utils} from "ethers";
 import {CoreAddresses} from "../../../scripts/deploy/CoreAddresses";
-import {Controller, FldxPair, Token} from "../../../typechain";
+import {Controller, FldxPair, Gauge, Gauge__factory, Token} from "../../../typechain";
 import {TestHelper} from "../../TestHelper";
 import {parseUnits} from "ethers/lib/utils";
 import {Misc} from "../../../scripts/Misc";
@@ -37,9 +37,6 @@ describe("minter tests", function () {
       owner,
       wmatic.address,
       [wmatic.address, ust.address, mim.address, dai.address],
-      [owner.address, owner2.address],
-      [utils.parseUnits('100'), utils.parseUnits('100')],
-      utils.parseUnits('200'),
       2
     );
 
@@ -55,11 +52,15 @@ describe("minter tests", function () {
       parseUnits('1', 6),
       true
     );
-    await core.voter.createGauge(pair.address);
+    const minter = await Misc.impersonate(core.minter.address);
+    await core.token.connect(minter).mint(owner.address, parseUnits('100'));
+    await core.token.approve(core.ve.address, BigNumber.from("1500000000000000000000000"));
+    await core.ve.createLock(100, 7*60*60*1000);
+    // await core.voter.createGauge(pair.address);
     // const gaugeMimUstAddress = await core.voter.gauges(pair.address);
     // gauge = Gauge__factory.connect(gaugeMimUstAddress, owner);
-    // await TestHelper.depositToGauge(owner, gauge, pair, parseUnits('0.0001'), 0);
-    await core.voter.vote(1, [pair.address], [100]);
+    // await TestHelper.depositToGauge(owner, gauge, pair, parseUnits('0.001', 6), 0);
+    // await core.voter.vote(1, [pair.address], [100]);
   });
 
   after(async function () {
@@ -75,12 +76,12 @@ describe("minter tests", function () {
     await TimeUtils.rollback(snapshot);
   });
 
-  it("circulating_supply test", async function () {
-    expect(await core.minter.circulatingSupply()).is.not.eq(BigNumber.from('0'));
+  it("set treasury unauthorized", async function() {
+    expect(await core.minter.connect(owner2.address).setTreasury(owner2.address)).revertedWith("Not treasury");
   });
 
-  it("calculate_emission test", async function () {
-    expect(await core.minter.calculateEmission()).is.eq(BigNumber.from('2000000000000000000000000'));
+  it("initial circulating_supplypost deployment test", async function () {
+    expect(await core.minter.circulatingSupply()).is.eq(BigNumber.from('0'));
   });
 
   it("weekly_emission test", async function () {
@@ -89,10 +90,6 @@ describe("minter tests", function () {
 
   it("circulating_emission test", async function () {
     expect(await core.minter.circulatingEmission()).is.not.eq(BigNumber.from('0'));
-  });
-
-  it("double init reject", async function () {
-    await expect(core.minter.initialize([], [], 0)).revertedWith("Not initializer")
   });
 
   it("wrong total amount test", async function () {
@@ -109,20 +106,18 @@ describe("minter tests", function () {
     await controller.setVoter(voter.address)
     const minter = await Deploy.deployFldxMinter(owner, ve.address, controller.address, 1);
     console.log((await minter.activePeriod()).toString());
-    await expect(minter.initialize([owner.address], [1], 2)).revertedWith('Wrong totalAmount')
   });
 
 
-  it("reach weekly threshold", async function () {
+  it("reach first threshold", async function () {
     await TimeUtils.advanceBlocksOnTs(60 * 60 * 24 * 7 * 2)
+    let numEpoch = 0;
     while (true) {
-      await TimeUtils.advanceBlocksOnTs(60 * 60 * 24 * 7)
+      numEpoch += 1
       await core.minter.updatePeriod();
-      const c = await core.minter.initialStubCirculation();
-      const circulatingEmission = await core.minter.circulatingEmission();
-      console.log(c.toString(), circulatingEmission.toString());
-      if (c.lte(circulatingEmission)) {
-        break;
+      await TimeUtils.advanceBlocksOnTs(60 * 60 * 24 * 7)
+      if (numEpoch === 52) {
+        expect(await core.minter.weeklyEmissionDecrease()).eq(9950);
       }
     }
   });

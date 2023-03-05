@@ -1,7 +1,7 @@
 import {Deploy} from "../Deploy";
 import {ethers} from "hardhat";
 import {writeFileSync} from "fs";
-import {TestnetAddresses} from "../../addresses/TestnetAddresses";
+import {TestnetAddresses} from "../../addresses/Addresses";
 
 async function main() {
   const signer = (await ethers.getSigners())[0];

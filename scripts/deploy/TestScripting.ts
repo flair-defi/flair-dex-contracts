@@ -1,11 +1,11 @@
 import {ethers} from "hardhat";
-import {Deploy} from "../Deploy";
-import {TestnetAddresses} from "../../addresses/TestnetAddresses";
+import {Deploy} from "./Deploy";
+import {TestnetAddresses} from "../addresses/Addresses";
 import {writeFileSync} from "fs";
-import {Misc} from "../../Misc";
-import {readContractAddress} from "../Helper";
+import {Misc} from "../Misc";
+import {readContractAddress} from "./Helper";
 import moment from "moment";
-import {Controller, Multicall2} from "../../../typechain";
+import {Controller, Multicall2} from "../../typechain";
 
 async function addLiquidity() {
 

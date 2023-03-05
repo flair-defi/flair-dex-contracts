@@ -18,10 +18,12 @@ import {
   FldxFactory,
   FldxMinter,
   FldxRouter01,
-  FldxVoter
+  FldxVoter, MerkleClaim, MerkleVeNFTClaim
 } from "../../typechain";
 import {Misc} from "../Misc";
 import {CoreAddresses} from "./CoreAddresses";
+import fs from "fs";
+import {Addresses} from "../addresses/Addresses";
 
 const log: Logger = new Logger(logSettings);
 
@@ -105,17 +107,20 @@ export class Deploy {
     return (await Deploy.deployContract(signer, 'FldxRouter01', factory, networkToken)) as FldxRouter01;
   }
 
-  public static async deployLibrary(
-      signer: SignerWithAddress,
-      router: string,
-  ) {
+  public static async deployLibrary(signer: SignerWithAddress, router: string) {
     return (await Deploy.deployContract(signer, 'SwapLibrary', router)) as SwapLibrary;
   }
 
-  public static async deployMultiCall(
-      signer: SignerWithAddress
-  ) {
+  public static async deployMultiCall(signer: SignerWithAddress) {
     return (await Deploy.deployContract(signer, 'Multicall2')) as Multicall2;
+  }
+
+  public static async deployMerkleClaim(signer: SignerWithAddress, fldx: string, root: string) {
+    return (await Deploy.deployContract(signer, 'MerkleClaim', fldx, root)) as MerkleClaim;
+  }
+
+  public static async deployMerkleVeNFTClaim(signer: SignerWithAddress, fldx: string, ve: string, root: string) {
+    return (await Deploy.deployContract(signer, 'MerkleVeNFTClaim', fldx, ve, root)) as MerkleVeNFTClaim;
   }
 
   public static async deployVe(signer: SignerWithAddress, token: string, controller: string) {
@@ -229,7 +234,13 @@ export class Deploy {
 
     const minter = await Deploy.deployFldxMinter(signer, ve.address, controller.address, warmingUpPeriod);
 
+    const merkleClaim = await Deploy.deployMerkleClaim(signer, token.address, Addresses.merkleRoot);
+    const merkleVeNFTClaim = await Deploy.deployMerkleVeNFTClaim(signer, token.address, ve.address,
+        Addresses.veNFTMerkleRoot);
+
     await Misc.runAndWait(() => token.setMinter(minter.address));
+    await Misc.runAndWait(() => token.setMerkleClaim(merkleClaim.address));
+    await Misc.runAndWait(() => token.setMerkleNFTClaim(merkleVeNFTClaim.address));
     await Misc.runAndWait(() => veDist.setDepositor(minter.address));
     await Misc.runAndWait(() => controller.setVeDist(veDist.address));
     await Misc.runAndWait(() => controller.setVoter(voter.address));

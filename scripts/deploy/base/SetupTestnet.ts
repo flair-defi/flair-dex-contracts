@@ -1,7 +1,7 @@
 import {Deploy} from "../Deploy";
 import {ethers} from "hardhat";
 import {BigNumber} from "ethers";
-import {TestnetAddresses} from "../../addresses/TestnetAddresses";
+import {TestnetAddresses} from "../../addresses/Addresses";
 import {writeFileSync} from "fs";
 
 

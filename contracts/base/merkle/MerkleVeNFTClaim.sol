@@ -11,7 +11,7 @@ import {MerkleProof} from "./MerkleProof.sol";
 /// @title MerkleClaim
 /// @notice Claims FLDX for members of a merkle tree
 /// @author Modified from Merkle Airdrop Starter (https://github.com/Anish-Agnihotri/merkle-airdrop-starter/blob/master/contracts/src/MerkleClaimERC20.sol)
-contract MerkleClaim {
+contract MerkleVeNFTClaim {
     /// ============ Immutable storage ============
     IFLDX public immutable fldx;
     IVe public immutable ve;
@@ -38,7 +38,7 @@ contract MerkleClaim {
     /// @notice Allows claiming tokens if address is part of merkle tree
     /// @param to address of claimee
     /// @param lockedAmount amount of lock owed to claimee
-    /// @param lockedDuration duration of lock in weeks
+    /// @param lockedDuration duration of lock in seconds
     /// @param proof merkle proof to prove address and amount are in tree
     function claim(
         address to,

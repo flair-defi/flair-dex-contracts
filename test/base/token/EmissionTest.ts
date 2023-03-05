@@ -20,7 +20,7 @@ import {Misc} from "../../../scripts/Misc";
 import {formatUnits, parseUnits} from "ethers/lib/utils";
 import {appendFileSync, writeFileSync} from "fs";
 import {BigNumber} from "ethers";
-import {TestnetAddresses} from "../../../scripts/addresses/TestnetAddresses";
+import {TestnetAddresses} from "../../../scripts/addresses/Addresses";
 
 const {expect} = chai;
 
