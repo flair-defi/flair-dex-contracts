@@ -24,6 +24,7 @@ import {Misc} from "../Misc";
 import {CoreAddresses} from "./CoreAddresses";
 import fs from "fs";
 import {Addresses} from "../addresses/Addresses";
+import {sign} from "crypto";
 
 const log: Logger = new Logger(logSettings);
 
@@ -237,6 +238,10 @@ export class Deploy {
     const merkleClaim = await Deploy.deployMerkleClaim(signer, token.address, Addresses.merkleRoot);
     const merkleVeNFTClaim = await Deploy.deployMerkleVeNFTClaim(signer, token.address, ve.address,
         Addresses.veNFTMerkleRoot);
+
+    // premint liquidity + team tokens + marketing + advisors + unallocated community tokens
+    // 20M + 10M + 4M + 1M + 13M
+    await Misc.runAndWait(() => token.mint(signer.address, '48000000000000000000000000'))
 
     await Misc.runAndWait(() => token.setMinter(minter.address));
     await Misc.runAndWait(() => token.setMerkleClaim(merkleClaim.address));
