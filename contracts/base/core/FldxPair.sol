@@ -121,7 +121,7 @@ contract FldxPair is IERC20, IPair, Reentrancy {
   }
 
   function setPartner(address _partner) external {
-    require(msg.sender == IFactory(factory).feeManager(), 'not fee manager');
+    require(msg.sender == IFactory(factory).partnerSetter(), 'not partnerSetter');
     partner = _partner;
   }
 

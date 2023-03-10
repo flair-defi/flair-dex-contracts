@@ -34,7 +34,7 @@ describe("router tests", function () {
   before(async function () {
     snapshotBefore = await TimeUtils.snapshot();
     [owner, owner2] = await ethers.getSigners();
-    weth = await Deploy.deployContract(owner, 'Token', 'WETH', 'WETH', 18, owner.address) as Token;
+    weth = await Deploy.deployContract(owner, 'Token', 'WAVAX', 'WAVAX', 18, owner.address) as Token;
     await weth.mint(owner.address, parseUnits('1000'));
     factory = await Deploy.deployFldxFactory(owner, owner.address);
     router = await Deploy.deployFldxRouter01(owner, factory.address, weth.address);
@@ -122,9 +122,9 @@ describe("router tests", function () {
     );
   });
 
-  it("addLiquidityETH test", async function () {
+  it("addLiquidityAVAX test", async function () {
     await mim.approve(router.address, parseUnits('1'));
-    await router.addLiquidityETH(
+    await router.addLiquidityAVAX(
       mim.address,
       true,
       parseUnits('1'),
@@ -136,9 +136,9 @@ describe("router tests", function () {
     );
   });
 
-  it("removeLiquidityETH test", async function () {
+  it("removeLiquidityAVAX test", async function () {
     await mim.approve(router.address, parseUnits('1'));
-    await router.addLiquidityETH(
+    await router.addLiquidityAVAX(
       mim.address,
       true,
       parseUnits('1'),
@@ -152,7 +152,7 @@ describe("router tests", function () {
     const pairAdr = await factory.getPair(mim.address, weth.address, true);
 
     await FldxPair__factory.connect(pairAdr, owner).approve(router.address, parseUnits('1111'));
-    await router.removeLiquidityETH(
+    await router.removeLiquidityAVAX(
       mim.address,
       true,
       parseUnits('0.1'),
@@ -166,7 +166,7 @@ describe("router tests", function () {
 
   it("removeLiquidityWithPermit test", async function () {
     await mim.approve(router.address, parseUnits('1'));
-    await router.addLiquidityETH(
+    await router.addLiquidityAVAX(
       mim.address,
       true,
       parseUnits('1'),
@@ -199,9 +199,9 @@ describe("router tests", function () {
     );
   });
 
-  it("removeLiquidityETHWithPermit test", async function () {
+  it("removeLiquidityAVAXWithPermit test", async function () {
     await mim.approve(router.address, parseUnits('1'));
-    await router.addLiquidityETH(
+    await router.addLiquidityAVAX(
       mim.address,
       true,
       parseUnits('1'),
@@ -221,7 +221,7 @@ describe("router tests", function () {
       s
     } = await TestHelper.permitForPair(owner, pair, router.address, parseUnits('0.1'));
 
-    await router.removeLiquidityETHWithPermit(
+    await router.removeLiquidityAVAXWithPermit(
       mim.address,
       true,
       parseUnits('0.1'),
@@ -236,7 +236,7 @@ describe("router tests", function () {
   it("swapExactTokensForTokensSimple test", async function () {
     await mim.approve(router.address, parseUnits('10'));
 
-    await router.addLiquidityETH(
+    await router.addLiquidityAVAX(
       mim.address,
       true,
       parseUnits('1'),
@@ -258,10 +258,10 @@ describe("router tests", function () {
     );
   });
 
-  it("swapExactTokensForETH test", async function () {
+  it("swapExactTokensForAVAX test", async function () {
     await mim.approve(router.address, parseUnits('10'));
 
-    await router.addLiquidityETH(
+    await router.addLiquidityAVAX(
       mim.address,
       true,
       parseUnits('1'),
@@ -272,7 +272,7 @@ describe("router tests", function () {
       {value: parseUnits('10')}
     );
 
-    await router.swapExactTokensForETH(
+    await router.swapExactTokensForAVAX(
       parseUnits('0.1'),
       0,
       [{
@@ -288,7 +288,7 @@ describe("router tests", function () {
   it("UNSAFE_swapExactTokensForTokens test", async function () {
     await mim.approve(router.address, parseUnits('10'));
 
-    await router.addLiquidityETH(
+    await router.addLiquidityAVAX(
       mim.address,
       true,
       parseUnits('1'),
@@ -311,10 +311,10 @@ describe("router tests", function () {
     );
   });
 
-  it("swapExactETHForTokens test", async function () {
+  it("swapExactAVAXForTokens test", async function () {
     await mim.approve(router.address, parseUnits('10'));
 
-    await router.addLiquidityETH(
+    await router.addLiquidityAVAX(
       mim.address,
       true,
       parseUnits('1'),
@@ -325,7 +325,7 @@ describe("router tests", function () {
       {value: parseUnits('10')}
     );
 
-    await router.swapExactETHForTokens(
+    await router.swapExactAVAXForTokens(
       0,
       [{
         from: weth.address,
@@ -343,7 +343,7 @@ describe("router tests", function () {
     const ethBalance = await owner.getBalance();
     const tokenBalance = await tokenWithFee.balanceOf(owner.address);
 
-    await router.addLiquidityETH(
+    await router.addLiquidityAVAX(
       tokenWithFee.address,
       true,
       parseUnits('1'),
@@ -364,7 +364,7 @@ describe("router tests", function () {
       s
     } = await TestHelper.permitForPair(owner, pair, router.address, pairBal);
 
-    await router.removeLiquidityETHWithPermitSupportingFeeOnTransferTokens(
+    await router.removeLiquidityAVAXWithPermitSupportingFeeOnTransferTokens(
       tokenWithFee.address,
       true,
       pairBal,
@@ -385,7 +385,7 @@ describe("router tests", function () {
   it("swapExactTokensForTokensSupportingFeeOnTransferTokens test", async function () {
     await tokenWithFee.approve(router.address, parseUnits('10'));
 
-    await router.addLiquidityETH(
+    await router.addLiquidityAVAX(
       tokenWithFee.address,
       true,
       parseUnits('1'),
@@ -413,10 +413,10 @@ describe("router tests", function () {
     TestHelper.closer(tokenBalanceAfter, tokenBalance, parseUnits('0.5'));
   });
 
-  it("swapExactETHForTokensSupportingFeeOnTransferTokens test", async function () {
+  it("swapExactAVAXForTokensSupportingFeeOnTransferTokens test", async function () {
     await tokenWithFee.approve(router.address, parseUnits('10'));
 
-    await router.addLiquidityETH(
+    await router.addLiquidityAVAX(
       tokenWithFee.address,
       true,
       parseUnits('1'),
@@ -430,7 +430,7 @@ describe("router tests", function () {
     const ethBalance = await owner.getBalance();
     const tokenBalance = await tokenWithFee.balanceOf(owner.address);
 
-    await router.swapExactETHForTokensSupportingFeeOnTransferTokens(
+    await router.swapExactAVAXForTokensSupportingFeeOnTransferTokens(
       0,
       [{to: tokenWithFee.address, from: weth.address, stable: true}],
       owner.address,
@@ -444,10 +444,10 @@ describe("router tests", function () {
     TestHelper.closer(tokenBalanceAfter, tokenBalance, parseUnits('0.1'));
   });
 
-  it("swapExactTokensForETHSupportingFeeOnTransferTokens test", async function () {
+  it("swapExactTokensForAVAXSupportingFeeOnTransferTokens test", async function () {
     await tokenWithFee.approve(router.address, parseUnits('10'));
 
-    await router.addLiquidityETH(
+    await router.addLiquidityAVAX(
       tokenWithFee.address,
       true,
       parseUnits('1'),
@@ -461,7 +461,7 @@ describe("router tests", function () {
     const ethBalance = await owner.getBalance();
     const tokenBalance = await tokenWithFee.balanceOf(owner.address);
 
-    await router.swapExactTokensForETHSupportingFeeOnTransferTokens(
+    await router.swapExactTokensForAVAXSupportingFeeOnTransferTokens(
       parseUnits('0.1'),
       0,
       [{from: tokenWithFee.address, to: weth.address, stable: true}],
@@ -485,7 +485,7 @@ describe("router tests", function () {
 
     await tokenWithFee.approve(router.address, parseUnits('10'));
 
-    await router.addLiquidityETH(
+    await router.addLiquidityAVAX(
       tokenWithFee.address,
       true,
       parseUnits('1'),
@@ -505,7 +505,7 @@ describe("router tests", function () {
   });
 
   it("deadline reject", async function () {
-    await expect(router.addLiquidityETH(
+    await expect(router.addLiquidityAVAX(
       mim.address,
       true,
       parseUnits('1'),
@@ -540,7 +540,7 @@ describe("router tests", function () {
   });
 
   it("receive eth not from weth reject", async function () {
-    await expect(owner.sendTransaction({value: 1, to: router.address})).revertedWith("FldxRouter: NOT_WETH");
+    await expect(owner.sendTransaction({value: 1, to: router.address})).revertedWith("FldxRouter: NOT_WAVAX");
   });
 
   it("getReserves", async function () {
@@ -578,7 +578,7 @@ describe("router tests", function () {
   });
 
   it("add liquidity amount desired check", async function () {
-    await expect(router.addLiquidityETH(
+    await expect(router.addLiquidityAVAX(
       mim.address,
       true,
       parseUnits('1'),
@@ -588,7 +588,7 @@ describe("router tests", function () {
       99999999999,
       {value: parseUnits('10')}
     )).revertedWith('FldxRouter: DESIRED_A_AMOUNT');
-    await expect(router.addLiquidityETH(
+    await expect(router.addLiquidityAVAX(
       mim.address,
       true,
       parseUnits('1'),
@@ -613,7 +613,7 @@ describe("router tests", function () {
       true
     );
 
-    await expect(router.addLiquidityETH(
+    await expect(router.addLiquidityAVAX(
       mim.address,
       true,
       parseUnits('0.037'),
@@ -624,7 +624,7 @@ describe("router tests", function () {
       {value: parseUnits('0.77')}
     )).revertedWith('FldxRouter: INSUFFICIENT_B_AMOUNT');
 
-    await expect(router.addLiquidityETH(
+    await expect(router.addLiquidityAVAX(
       mim.address,
       true,
       parseUnits('0.037'),
@@ -637,7 +637,7 @@ describe("router tests", function () {
   });
 
 
-  it("addLiquidityETH send back dust", async function () {
+  it("addLiquidityAVAX send back dust", async function () {
     await TestHelper.addLiquidity(
       factory,
       router,
@@ -650,7 +650,7 @@ describe("router tests", function () {
     );
 
     await mim.approve(router.address, parseUnits('10'));
-    await router.addLiquidityETH(
+    await router.addLiquidityAVAX(
       mim.address,
       true,
       parseUnits('1'),
@@ -665,7 +665,7 @@ describe("router tests", function () {
 
   it("remove Liquidity IA test", async function () {
     await mim.approve(router.address, parseUnits('1'));
-    await router.addLiquidityETH(
+    await router.addLiquidityAVAX(
       mim.address,
       true,
       parseUnits('1'),
@@ -701,9 +701,9 @@ describe("router tests", function () {
     )).revertedWith('FldxRouter: INSUFFICIENT_B_AMOUNT');
   });
 
-  it("removeLiquidityETHSupportingFeeOnTransferTokens test", async function () {
+  it("removeLiquidityAVAXSupportingFeeOnTransferTokens test", async function () {
     await tokenWithFee.approve(router.address, parseUnits('1'));
-    await router.addLiquidityETH(
+    await router.addLiquidityAVAX(
       tokenWithFee.address,
       true,
       parseUnits('1'),
@@ -717,7 +717,7 @@ describe("router tests", function () {
     const pairAdr = await factory.getPair(tokenWithFee.address, weth.address, true);
 
     await FldxPair__factory.connect(pairAdr, owner).approve(router.address, parseUnits('1111'));
-    await router.removeLiquidityETHSupportingFeeOnTransferTokens(
+    await router.removeLiquidityAVAXSupportingFeeOnTransferTokens(
       tokenWithFee.address,
       true,
       parseUnits('0.1'),
@@ -755,8 +755,8 @@ describe("router tests", function () {
   });
 
 
-  it("swapExactETHForTokens IOA test", async function () {
-    await expect(router.swapExactETHForTokens(
+  it("swapExactAVAXForTokens IOA test", async function () {
+    await expect(router.swapExactAVAXForTokens(
       parseUnits('0.1'),
       [{
         to: mim.address,
@@ -768,8 +768,8 @@ describe("router tests", function () {
     )).revertedWith('FldxRouter: INSUFFICIENT_OUTPUT_AMOUNT');
   });
 
-  it("swapExactETHForTokens IP test", async function () {
-    await expect(router.swapExactETHForTokens(
+  it("swapExactAVAXForTokens IP test", async function () {
+    await expect(router.swapExactAVAXForTokens(
       parseUnits('0.1'),
       [{
         from: mim.address,
@@ -781,8 +781,8 @@ describe("router tests", function () {
     )).revertedWith('FldxRouter: INVALID_PATH');
   });
 
-  it("swapExactTokensForETH IOA test", async function () {
-    await expect(router.swapExactTokensForETH(
+  it("swapExactTokensForAVAX IOA test", async function () {
+    await expect(router.swapExactTokensForAVAX(
       parseUnits('0.1'),
       parseUnits('0.1'),
       [{
@@ -795,8 +795,8 @@ describe("router tests", function () {
     )).revertedWith('FldxRouter: INSUFFICIENT_OUTPUT_AMOUNT');
   });
 
-  it("swapExactTokensForETH IP test", async function () {
-    await expect(router.swapExactTokensForETH(
+  it("swapExactTokensForAVAX IP test", async function () {
+    await expect(router.swapExactTokensForAVAX(
       parseUnits('0.1'),
       parseUnits('0.1'),
       [{
@@ -811,7 +811,7 @@ describe("router tests", function () {
 
   it("swapExactTokensForTokensSupportingFeeOnTransferTokens IOA test", async function () {
     await tokenWithFee.approve(router.address, parseUnits('1'));
-    await router.addLiquidityETH(
+    await router.addLiquidityAVAX(
       tokenWithFee.address,
       true,
       parseUnits('1'),
@@ -836,9 +836,9 @@ describe("router tests", function () {
     )).revertedWith('FldxRouter: INSUFFICIENT_OUTPUT_AMOUNT');
   });
 
-  it("swapExactETHForTokensSupportingFeeOnTransferTokens IP test", async function () {
+  it("swapExactAVAXForTokensSupportingFeeOnTransferTokens IP test", async function () {
     await tokenWithFee.approve(router.address, parseUnits('1'));
-    await router.addLiquidityETH(
+    await router.addLiquidityAVAX(
       tokenWithFee.address,
       true,
       parseUnits('1'),
@@ -850,7 +850,7 @@ describe("router tests", function () {
     );
 
     await weth.approve(router.address, parseUnits('1000'));
-    await expect(router.swapExactETHForTokensSupportingFeeOnTransferTokens(
+    await expect(router.swapExactAVAXForTokensSupportingFeeOnTransferTokens(
       parseUnits('0.1'),
       [{
         from: tokenWithFee.address,
@@ -863,9 +863,9 @@ describe("router tests", function () {
     )).revertedWith('FldxRouter: INVALID_PATH');
   });
 
-  it("swapExactETHForTokensSupportingFeeOnTransferTokens IOA test", async function () {
+  it("swapExactAVAXForTokensSupportingFeeOnTransferTokens IOA test", async function () {
     await tokenWithFee.approve(router.address, parseUnits('1'));
-    await router.addLiquidityETH(
+    await router.addLiquidityAVAX(
       tokenWithFee.address,
       true,
       parseUnits('1'),
@@ -877,7 +877,7 @@ describe("router tests", function () {
     );
 
     await weth.approve(router.address, parseUnits('1000'));
-    await expect(router.swapExactETHForTokensSupportingFeeOnTransferTokens(
+    await expect(router.swapExactAVAXForTokensSupportingFeeOnTransferTokens(
       parseUnits('0.1'),
       [{
         to: tokenWithFee.address,
@@ -890,9 +890,9 @@ describe("router tests", function () {
     )).revertedWith('FldxRouter: INSUFFICIENT_OUTPUT_AMOUNT');
   });
 
-  it("swapExactTokensForETHSupportingFeeOnTransferTokens IOA test", async function () {
+  it("swapExactTokensForAVAXSupportingFeeOnTransferTokens IOA test", async function () {
     await tokenWithFee.approve(router.address, parseUnits('100'));
-    await router.addLiquidityETH(
+    await router.addLiquidityAVAX(
       tokenWithFee.address,
       true,
       parseUnits('1'),
@@ -904,7 +904,7 @@ describe("router tests", function () {
     );
 
     await weth.approve(router.address, parseUnits('1000'));
-    await expect(router.swapExactTokensForETHSupportingFeeOnTransferTokens(
+    await expect(router.swapExactTokensForAVAXSupportingFeeOnTransferTokens(
       parseUnits('0.1'),
       parseUnits('0.1'),
       [{
@@ -917,9 +917,9 @@ describe("router tests", function () {
     )).revertedWith('FldxRouter: INSUFFICIENT_OUTPUT_AMOUNT');
   });
 
-  it("swapExactTokensForETHSupportingFeeOnTransferTokens IP test", async function () {
+  it("swapExactTokensForAVAXSupportingFeeOnTransferTokens IP test", async function () {
     await tokenWithFee.approve(router.address, parseUnits('100'));
-    await router.addLiquidityETH(
+    await router.addLiquidityAVAX(
       tokenWithFee.address,
       true,
       parseUnits('1'),
@@ -931,7 +931,7 @@ describe("router tests", function () {
     );
 
     await weth.approve(router.address, parseUnits('1000'));
-    await expect(router.swapExactTokensForETHSupportingFeeOnTransferTokens(
+    await expect(router.swapExactTokensForAVAXSupportingFeeOnTransferTokens(
       parseUnits('0.1'),
       parseUnits('0.1'),
       [{
@@ -945,12 +945,12 @@ describe("router tests", function () {
   });
 
   it("router with broken eth should revert", async function () {
-    const brokenEth = await Deploy.deployContract(owner, 'BrokenWETH', 'WETH', 'WETH', 18, owner.address)
+    const brokenEth = await Deploy.deployContract(owner, 'BrokenWAVAX', 'WAVAX', 'WAVAX', 18, owner.address)
     const routerWithBrokenEth = await Deploy.deployFldxRouter01(owner, factory.address, brokenEth.address);
 
     await mim.approve(routerWithBrokenEth.address, parseUnits('10'));
 
-    await routerWithBrokenEth.addLiquidityETH(
+    await routerWithBrokenEth.addLiquidityAVAX(
       mim.address,
       true,
       parseUnits('1'),
@@ -962,7 +962,7 @@ describe("router tests", function () {
     );
 
     await mim.approve(routerWithBrokenEth.address, parseUnits('1000'));
-    await expect(routerWithBrokenEth.swapExactTokensForETH(
+    await expect(routerWithBrokenEth.swapExactTokensForAVAX(
       parseUnits('0.01'),
       0,
       [{
@@ -972,7 +972,7 @@ describe("router tests", function () {
       }],
       owner.address,
       99999999999
-    )).revertedWith('FldxRouter: ETH_TRANSFER_FAILED');
+    )).revertedWith('FldxRouter: AVAX_TRANSFER_FAILED');
   });
 
 });

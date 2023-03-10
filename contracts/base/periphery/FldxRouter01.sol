@@ -5,7 +5,7 @@ pragma solidity ^0.8.13;
 import "../../lib/Math.sol";
 import "../../lib/SafeERC20.sol";
 import "../../interface/IERC20.sol";
-import "../../interface/IWETH.sol";
+import "../../interface/IWAVAX.sol";
 import "../../interface/IPair.sol";
 import "../../interface/IFactory.sol";
 
@@ -19,7 +19,7 @@ contract FldxRouter01 {
   }
 
   address public immutable factory;
-  IWETH public immutable weth;
+  IWAVAX public immutable wavax;
   uint internal constant MINIMUM_LIQUIDITY = 10 ** 3;
   bytes32 immutable pairCodeHash;
 
@@ -28,15 +28,15 @@ contract FldxRouter01 {
     _;
   }
 
-  constructor(address _factory, address _weth) {
+  constructor(address _factory, address _wavax) {
     factory = _factory;
     pairCodeHash = IFactory(_factory).pairCodeHash();
-    weth = IWETH(_weth);
+    wavax = IWAVAX(_wavax);
   }
 
   receive() external payable {
-    // only accept ETH via fallback from the WETH contract
-    require(msg.sender == address(weth), "FldxRouter: NOT_WETH");
+    // only accept AVAX via fallback from the WAVAX contract
+    require(msg.sender == address(wavax), "FldxRouter: NOT_WAVAX");
   }
 
   function sortTokens(address tokenA, address tokenB) external pure returns (address token0, address token1) {
@@ -243,31 +243,31 @@ contract FldxRouter01 {
     liquidity = IPair(pair).mint(to);
   }
 
-  function addLiquidityETH(
+  function addLiquidityAVAX(
     address token,
     bool stable,
     uint amountTokenDesired,
     uint amountTokenMin,
-    uint amountETHMin,
+    uint amountAVAXMin,
     address to,
     uint deadline
-  ) external payable ensure(deadline) returns (uint amountToken, uint amountETH, uint liquidity) {
-    (amountToken, amountETH) = _addLiquidity(
+  ) external payable ensure(deadline) returns (uint amountToken, uint amountAVAX, uint liquidity) {
+    (amountToken, amountAVAX) = _addLiquidity(
       token,
-      address(weth),
+      address(wavax),
       stable,
       amountTokenDesired,
       msg.value,
       amountTokenMin,
-      amountETHMin
+      amountAVAXMin
     );
-    address pair = _pairFor(token, address(weth), stable);
+    address pair = _pairFor(token, address(wavax), stable);
     IERC20(token).safeTransferFrom(msg.sender, pair, amountToken);
-    weth.deposit{value : amountETH}();
-    assert(weth.transfer(pair, amountETH));
+    wavax.deposit{value : amountAVAX}();
+    assert(wavax.transfer(pair, amountAVAX));
     liquidity = IPair(pair).mint(to);
-    // refund dust eth, if any
-    if (msg.value > amountETH) _safeTransferETH(msg.sender, msg.value - amountETH);
+    // refund dust avax, if any
+    if (msg.value > amountAVAX) _safeTransferAVAX(msg.sender, msg.value - amountAVAX);
   }
 
   // **** REMOVE LIQUIDITY ****
@@ -314,48 +314,48 @@ contract FldxRouter01 {
     require(amountB >= amountBMin, 'FldxRouter: INSUFFICIENT_B_AMOUNT');
   }
 
-  function removeLiquidityETH(
+  function removeLiquidityAVAX(
     address token,
     bool stable,
     uint liquidity,
     uint amountTokenMin,
-    uint amountETHMin,
+    uint amountAVAXMin,
     address to,
     uint deadline
-  ) external returns (uint amountToken, uint amountETH) {
-    return _removeLiquidityETH(
+  ) external returns (uint amountToken, uint amountAVAX) {
+    return _removeLiquidityAVAX(
       token,
       stable,
       liquidity,
       amountTokenMin,
-      amountETHMin,
+      amountAVAXMin,
       to,
       deadline
     );
   }
 
-  function _removeLiquidityETH(
+  function _removeLiquidityAVAX(
     address token,
     bool stable,
     uint liquidity,
     uint amountTokenMin,
-    uint amountETHMin,
+    uint amountAVAXMin,
     address to,
     uint deadline
-  ) internal ensure(deadline) returns (uint amountToken, uint amountETH) {
-    (amountToken, amountETH) = _removeLiquidity(
+  ) internal ensure(deadline) returns (uint amountToken, uint amountAVAX) {
+    (amountToken, amountAVAX) = _removeLiquidity(
       token,
-      address(weth),
+      address(wavax),
       stable,
       liquidity,
       amountTokenMin,
-      amountETHMin,
+      amountAVAXMin,
       address(this),
       deadline
     );
     IERC20(token).safeTransfer(to, amountToken);
-    weth.withdraw(amountETH);
-    _safeTransferETH(to, amountETH);
+    wavax.withdraw(amountAVAX);
+    _safeTransferAVAX(to, amountAVAX);
   }
 
   function removeLiquidityWithPermit(
@@ -378,23 +378,23 @@ contract FldxRouter01 {
     (amountA, amountB) = _removeLiquidity(tokenA, tokenB, stable, liquidity, amountAMin, amountBMin, to, deadline);
   }
 
-  function removeLiquidityETHWithPermit(
+  function removeLiquidityAVAXWithPermit(
     address token,
     bool stable,
     uint liquidity,
     uint amountTokenMin,
-    uint amountETHMin,
+    uint amountAVAXMin,
     address to,
     uint deadline,
     bool approveMax, uint8 v, bytes32 r, bytes32 s
-  ) external returns (uint amountToken, uint amountETH) {
-    address pair = _pairFor(token, address(weth), stable);
+  ) external returns (uint amountToken, uint amountAVAX) {
+    address pair = _pairFor(token, address(wavax), stable);
     uint value = approveMax ? type(uint).max : liquidity;
     IPair(pair).permit(msg.sender, address(this), value, deadline, v, r, s);
-    (amountToken, amountETH) = _removeLiquidityETH(token, stable, liquidity, amountTokenMin, amountETHMin, to, deadline);
+    (amountToken, amountAVAX) = _removeLiquidityAVAX(token, stable, liquidity, amountTokenMin, amountAVAXMin, to, deadline);
   }
 
-  function removeLiquidityETHSupportingFeeOnTransferTokens(
+  function removeLiquidityAVAXSupportingFeeOnTransferTokens(
     address token,
     bool stable,
     uint liquidity,
@@ -403,7 +403,7 @@ contract FldxRouter01 {
     address to,
     uint deadline
   ) external returns (uint amountToken, uint amountFTM) {
-    return _removeLiquidityETHSupportingFeeOnTransferTokens(
+    return _removeLiquidityAVAXSupportingFeeOnTransferTokens(
       token,
       stable,
       liquidity,
@@ -414,7 +414,7 @@ contract FldxRouter01 {
     );
   }
 
-  function _removeLiquidityETHSupportingFeeOnTransferTokens(
+  function _removeLiquidityAVAXSupportingFeeOnTransferTokens(
     address token,
     bool stable,
     uint liquidity,
@@ -425,7 +425,7 @@ contract FldxRouter01 {
   ) internal ensure(deadline) returns (uint amountToken, uint amountFTM) {
     (amountToken, amountFTM) = _removeLiquidity(
       token,
-      address(weth),
+      address(wavax),
       stable,
       liquidity,
       amountTokenMin,
@@ -434,11 +434,11 @@ contract FldxRouter01 {
       deadline
     );
     IERC20(token).safeTransfer(to, IERC20(token).balanceOf(address(this)));
-    weth.withdraw(amountFTM);
-    _safeTransferETH(to, amountFTM);
+    wavax.withdraw(amountFTM);
+    _safeTransferAVAX(to, amountFTM);
   }
 
-  function removeLiquidityETHWithPermitSupportingFeeOnTransferTokens(
+  function removeLiquidityAVAXWithPermitSupportingFeeOnTransferTokens(
     address token,
     bool stable,
     uint liquidity,
@@ -448,10 +448,10 @@ contract FldxRouter01 {
     uint deadline,
     bool approveMax, uint8 v, bytes32 r, bytes32 s
   ) external returns (uint amountToken, uint amountFTM) {
-    address pair = _pairFor(token, address(weth), stable);
+    address pair = _pairFor(token, address(wavax), stable);
     uint value = approveMax ? type(uint).max : liquidity;
     IPair(pair).permit(msg.sender, address(this), value, deadline, v, r, s);
-    (amountToken, amountFTM) = _removeLiquidityETHSupportingFeeOnTransferTokens(
+    (amountToken, amountFTM) = _removeLiquidityAVAXSupportingFeeOnTransferTokens(
       token, stable, liquidity, amountTokenMin, amountFTMMin, to, deadline
     );
   }
@@ -526,34 +526,34 @@ contract FldxRouter01 {
     _swap(amounts, routes, to);
   }
 
-  function swapExactETHForTokens(uint amountOutMin, Route[] calldata routes, address to, uint deadline)
+  function swapExactAVAXForTokens(uint amountOutMin, Route[] calldata routes, address to, uint deadline)
   external
   payable
   ensure(deadline)
   returns (uint[] memory amounts)
   {
-    require(routes[0].from == address(weth), 'FldxRouter: INVALID_PATH');
+    require(routes[0].from == address(wavax), 'FldxRouter: INVALID_PATH');
     amounts = _getAmountsOut(msg.value, routes);
     require(amounts[amounts.length - 1] >= amountOutMin, 'FldxRouter: INSUFFICIENT_OUTPUT_AMOUNT');
-    weth.deposit{value : amounts[0]}();
-    assert(weth.transfer(_pairFor(routes[0].from, routes[0].to, routes[0].stable), amounts[0]));
+    wavax.deposit{value : amounts[0]}();
+    assert(wavax.transfer(_pairFor(routes[0].from, routes[0].to, routes[0].stable), amounts[0]));
     _swap(amounts, routes, to);
   }
 
-  function swapExactTokensForETH(uint amountIn, uint amountOutMin, Route[] calldata routes, address to, uint deadline)
+  function swapExactTokensForAVAX(uint amountIn, uint amountOutMin, Route[] calldata routes, address to, uint deadline)
   external
   ensure(deadline)
   returns (uint[] memory amounts)
   {
-    require(routes[routes.length - 1].to == address(weth), 'FldxRouter: INVALID_PATH');
+    require(routes[routes.length - 1].to == address(wavax), 'FldxRouter: INVALID_PATH');
     amounts = _getAmountsOut(amountIn, routes);
     require(amounts[amounts.length - 1] >= amountOutMin, 'FldxRouter: INSUFFICIENT_OUTPUT_AMOUNT');
     IERC20(routes[0].from).safeTransferFrom(
       msg.sender, _pairFor(routes[0].from, routes[0].to, routes[0].stable), amounts[0]
     );
     _swap(amounts, routes, address(this));
-    weth.withdraw(amounts[amounts.length - 1]);
-    _safeTransferETH(to, amounts[amounts.length - 1]);
+    wavax.withdraw(amounts[amounts.length - 1]);
+    _safeTransferAVAX(to, amounts[amounts.length - 1]);
   }
 
   function swapExactTokensForTokensSupportingFeeOnTransferTokens(
@@ -576,7 +576,7 @@ contract FldxRouter01 {
     );
   }
 
-  function swapExactETHForTokensSupportingFeeOnTransferTokens(
+  function swapExactAVAXForTokensSupportingFeeOnTransferTokens(
     uint amountOutMin,
     Route[] calldata routes,
     address to,
@@ -586,10 +586,10 @@ contract FldxRouter01 {
   payable
   ensure(deadline)
   {
-    require(routes[0].from == address(weth), 'FldxRouter: INVALID_PATH');
+    require(routes[0].from == address(wavax), 'FldxRouter: INVALID_PATH');
     uint amountIn = msg.value;
-    weth.deposit{value : amountIn}();
-    assert(weth.transfer(_pairFor(routes[0].from, routes[0].to, routes[0].stable), amountIn));
+    wavax.deposit{value : amountIn}();
+    assert(wavax.transfer(_pairFor(routes[0].from, routes[0].to, routes[0].stable), amountIn));
     uint balanceBefore = IERC20(routes[routes.length - 1].to).balanceOf(to);
     _swapSupportingFeeOnTransferTokens(routes, to);
     require(
@@ -598,7 +598,7 @@ contract FldxRouter01 {
     );
   }
 
-  function swapExactTokensForETHSupportingFeeOnTransferTokens(
+  function swapExactTokensForAVAXSupportingFeeOnTransferTokens(
     uint amountIn,
     uint amountOutMin,
     Route[] calldata routes,
@@ -608,15 +608,15 @@ contract FldxRouter01 {
   external
   ensure(deadline)
   {
-    require(routes[routes.length - 1].to == address(weth), 'FldxRouter: INVALID_PATH');
+    require(routes[routes.length - 1].to == address(wavax), 'FldxRouter: INVALID_PATH');
     IERC20(routes[0].from).safeTransferFrom(
       msg.sender, _pairFor(routes[0].from, routes[0].to, routes[0].stable), amountIn
     );
     _swapSupportingFeeOnTransferTokens(routes, address(this));
-    uint amountOut = IERC20(address(weth)).balanceOf(address(this));
+    uint amountOut = IERC20(address(wavax)).balanceOf(address(this));
     require(amountOut >= amountOutMin, 'FldxRouter: INSUFFICIENT_OUTPUT_AMOUNT');
-    weth.withdraw(amountOut);
-    _safeTransferETH(to, amountOut);
+    wavax.withdraw(amountOut);
+    _safeTransferAVAX(to, amountOut);
   }
 
   function UNSAFE_swapExactTokensForTokens(
@@ -630,8 +630,8 @@ contract FldxRouter01 {
     return amounts;
   }
 
-  function _safeTransferETH(address to, uint value) internal {
+  function _safeTransferAVAX(address to, uint value) internal {
     (bool success,) = to.call{value : value}(new bytes(0));
-    require(success, 'FldxRouter: ETH_TRANSFER_FAILED');
+    require(success, 'FldxRouter: AVAX_TRANSFER_FAILED');
   }
 }

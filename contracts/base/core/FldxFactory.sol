@@ -8,23 +8,20 @@ import "./FldxPair.sol";
 contract FldxFactory is IFactory {
 
   bool public override isPaused;
-  address public pauser;
-  address public pendingPauser;
+  address public admin;
+  address public pendingAdmin;
+  address public partnerSetter;
   address public immutable override treasury;
-  address public feeManager;
-  address public pendingFeeManager;
 
-  uint256 public stableFee;
-  uint256 public volatileFee;
-  uint256 public treasuryFee;
-  uint256 public partnerFee;
+  uint256 public stableFee = 2;
+  uint256 public volatileFee = 20;
+  uint256 public constant treasuryFee = 10;
+  uint256 public constant partnerFee = 3;
 
   /// @dev 0.4% max volatile swap fees
-  uint internal constant MAX_VOLATILE_SWAP_FEE = 50;
+  uint internal constant MAX_VOLATILE_SWAP_FEE = 40;
   /// @dev 0.1% max stable swap fee
-  uint internal constant MAX_STABLE_SWAP_FEE = 20;
-  /// @dev 20% max allowed treasury fee, percentage of total fee
-  uint internal constant MAX_TREASURY_FEE = 20;
+  uint internal constant MAX_STABLE_SWAP_FEE = 10;
 
   mapping(address => mapping(address => mapping(bool => address))) public override getPair;
   address[] public allPairs;
@@ -44,47 +41,38 @@ contract FldxFactory is IFactory {
   );
 
   constructor(address _treasury) {
-    pauser = msg.sender;
-    feeManager = msg.sender;
+    admin = msg.sender;
     isPaused = false;
     treasury = _treasury;
-    volatileFee = 20;
-    stableFee = 4;
-    treasuryFee = 10;
-    partnerFee = 3;
+    partnerSetter = msg.sender;
   }
 
   function allPairsLength() external view returns (uint) {
     return allPairs.length;
   }
 
-  function setPauser(address _pauser) external {
-    require(msg.sender == pauser, "FldxFactory: Not pauser");
-    pendingPauser = _pauser;
+  function setAdmin(address _admin) external {
+    require(msg.sender == admin, "FldxFactory: Not Admin");
+    pendingAdmin = _admin;
   }
 
-  function acceptPauser() external {
-    require(msg.sender == pendingPauser, "FldxFactory: Not pending pauser");
-    pauser = pendingPauser;
+  function acceptAdmin() external {
+    require(msg.sender == pendingAdmin, "FldxFactory: Not pending admin");
+    admin = pendingAdmin;
   }
 
-  function setFeeManager(address _feeManager) external {
-    require(msg.sender == feeManager, 'not fee manager');
-    pendingFeeManager = _feeManager;
-  }
-
-  function acceptFeeManager() external {
-    require(msg.sender == pendingFeeManager, 'not pending fee manager');
-    feeManager = pendingFeeManager;
+  function setPartnerSetter(address _partnerSetter) external {
+    require(msg.sender == admin, "FldxFactory: Not admin");
+    partnerSetter = _partnerSetter;
   }
 
   function setPause(bool _state) external {
-    require(msg.sender == pauser, "FldxFactory: Not pauser");
+    require(msg.sender == admin, "FldxFactory: Not admin");
     isPaused = _state;
   }
 
   function setFee(bool _stable, uint256 _fee) external {
-    require(msg.sender == feeManager, 'not fee manager');
+    require(msg.sender == admin, 'not admin');
     require(_fee != 0, 'fee must be nonzero');
 
     if (_stable) {
@@ -94,13 +82,6 @@ contract FldxFactory is IFactory {
       require(_fee <= MAX_VOLATILE_SWAP_FEE, 'fee too high');
       volatileFee = _fee;
     }
-  }
-
-  function setTreasuryFee(uint256 _fee) external {
-    require(msg.sender == feeManager, 'not fee Manager');
-    require(_fee != 0, 'fees must be nonzero');
-    require(_fee <= MAX_TREASURY_FEE, 'fees must be less than max treasury fees');
-    treasuryFee = _fee;
   }
 
   function getFees(bool _stable) external view returns (uint) {

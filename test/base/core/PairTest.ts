@@ -84,6 +84,15 @@ describe("pair tests", function () {
     await TimeUtils.rollback(snapshot);
   });
 
+  it("set partner test", async function() {
+    await pair.setPartner(owner2.address);
+    expect(await pair.partner()).eq(owner2.address);
+  });
+
+  it("set partner test not partnerSetter", async function() {
+    await expect(pair.connect(owner2).setPartner(owner2.address)).revertedWith("not partnerSetter");
+  });
+
   it("observationLength test", async function () {
     expect(await pair.observationLength()).is.eq(1);
   });
@@ -127,7 +136,7 @@ describe("pair tests", function () {
       to: ust.address,
       stable: true,
     }], owner.address, 9999999999);
-    expect(await pair.quote(mim.address, parseUnits('1'), 1)).is.eq(BigNumber.from(747256));
+    expect(await pair.quote(mim.address, parseUnits('1'), 1)).is.eq(BigNumber.from(747255));
   });
 
   it("current twap price test with points", async function () {
@@ -143,7 +152,7 @@ describe("pair tests", function () {
       to: ust.address,
       stable: true,
     }], owner.address, 9999999999);
-    expect((await pair.prices(mim.address, parseUnits('1'), 1))[0]).is.eq(BigNumber.from(747256));
+    expect((await pair.prices(mim.address, parseUnits('1'), 1))[0]).is.eq(BigNumber.from(747255));
   });
 
   it("burn test", async function () {
@@ -228,7 +237,7 @@ describe("pair tests", function () {
   });
 
   it("set partner not feeManager", async function () {
-    await expect(pair2.connect(owner3).setPartner(owner3.address)).revertedWith('not fee manager');
+    await expect(pair2.connect(owner3).setPartner(owner3.address)).revertedWith('not partnerSetter');
   });
 
   it("insufficient output amount", async function () {

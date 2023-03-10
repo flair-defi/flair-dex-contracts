@@ -41,34 +41,24 @@ describe("factory tests", function () {
     await TimeUtils.rollback(snapshot);
   });
 
-  it("set pauser", async function () {
-    await factory.setPauser(owner2.address);
-    await factory.connect(owner2).acceptPauser();
-    expect(await factory.pauser()).is.eq(owner2.address);
+  it("set admin", async function () {
+    await factory.setAdmin(owner2.address);
+    await factory.connect(owner2).acceptAdmin();
+    expect(await factory.admin()).is.eq(owner2.address);
   });
 
-  it("set feeManager", async function() {
-    await factory.setFeeManager(owner2.address);
-    await factory.connect(owner2).acceptFeeManager();
-    expect(await factory.feeManager()).is.eq(owner2.address);
+  it("set admin only from admin", async function () {
+    await expect(factory.connect(owner2).setAdmin(owner2.address)).revertedWith("Not Admin");
   });
 
-  it("set pauser only from pauser", async function () {
-    await expect(factory.connect(owner2).setPauser(owner2.address)).revertedWith("Not pauser");
+  it("accept admin only from existing admin", async function () {
+    await factory.setAdmin(owner2.address);
+    await expect(factory.connect(owner).acceptAdmin()).revertedWith("FldxFactory: Not pending admin");
   });
 
-  it("accept pauser only from existing pauser", async function () {
-    await factory.setPauser(owner2.address);
-    await expect(factory.connect(owner).acceptPauser()).revertedWith("Not pending pauser");
-  });
-
-  it("set feeManager only from existing feeManager", async function () {
-    await expect(factory.connect(owner2).setFeeManager(owner2.address)).revertedWith("not fee manager");
-  });
-
-  it("accept feeManager only from pending feeManager", async function () {
-    await factory.setPauser(owner2.address);
-    await expect(factory.connect(owner).acceptFeeManager()).revertedWith("not pending fee manager");
+  it("set PartnerSetter", async function () {
+    await factory.setPartnerSetter(owner2.address);
+    expect(await factory.partnerSetter()).eq(owner2.address);
   });
 
   it("pause", async function () {
@@ -76,8 +66,8 @@ describe("factory tests", function () {
     expect(await factory.isPaused()).is.eq(true);
   });
 
-  it("pause only from pauser", async function () {
-    await expect(factory.connect(owner2).setPause(true)).revertedWith("Not pauser");
+  it("pause only from admin", async function () {
+    await expect(factory.connect(owner2).setPause(true)).revertedWith("FldxFactory: Not admin");
   });
 
   it("set fee stable", async function () {
@@ -89,11 +79,11 @@ describe("factory tests", function () {
   it("set fee volatile", async function () {
     await factory.setFee(false, 30);
     expect(await factory.getFees(false)).is.eq(30);
-    expect(await factory.getFees(true)).is.eq(4);
+    expect(await factory.getFees(true)).is.eq(2);
   });
 
-  it("set fee only from feeManager", async function() {
-    await expect(factory.connect(owner2).setFee(true, 5)).revertedWith("not fee manager");
+  it("set fee only from admin", async function() {
+    await expect(factory.connect(owner2).setFee(true, 5)).revertedWith("not admin");
   });
 
   it("set fees to zero", async function() {
@@ -106,27 +96,6 @@ describe("factory tests", function () {
 
   it("set volatile fees too high", async function() {
     await expect(factory.setFee(true, 100)).revertedWith("fee too high");
-  });
-
-  it("set treasury fees not feeManager", async function() {
-    await expect(factory.connect(owner2).setTreasuryFee(15)).revertedWith("not fee Manager");
-  });
-
-  it("set treasury fees as zero", async function() {
-    await expect(factory.setTreasuryFee(0)).revertedWith("fees must be nonzero'");
-  });
-
-  it("set treasury fees greater than max treasury fees", async function() {
-    await expect(factory.setTreasuryFee(100)).revertedWith("fees must be less than max treasury fees'");
-  });
-
-  it("set treasury fees success", async function() {
-    await expect(factory.setTreasuryFee(20));
-    await expect(await factory.treasuryFee()).eq(20);
-  });
-
-  it("set treasury fees not feeManager", async function() {
-    await expect(factory.connect(owner2).setTreasuryFee(15)).revertedWith("not fee Manager");
   });
 
   it("create pair revert with the same tokens", async function () {

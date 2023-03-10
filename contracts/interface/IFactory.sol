@@ -9,7 +9,9 @@ interface IFactory {
 
   function partnerFee() external view returns (uint);
 
-  function feeManager() external view returns (address);
+  function admin() external view returns (address);
+
+  function partnerSetter() external view returns (address);
 
   function isPair(address pair) external view returns (bool);
 
