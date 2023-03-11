@@ -33,8 +33,10 @@ contract FldxMinter is IMinter {
 
   /// @dev The core parameter for determinate the whole emission dynamic.
   ///       Will be decreased every week.
-  uint internal constant _START_BASE_WEEKLY_EMISSION = 10_000_000e18;
+  uint internal constant _START_BASE_WEEKLY_EMISSION = 5_000_000e18;
 
+  // 15% of weekly emission
+  uint internal constant _MAX_REBASE_EMISSION_PERCENTAGE = 1500;
 
   IUnderlying public immutable token;
   IVe public immutable ve;
@@ -71,7 +73,7 @@ contract FldxMinter is IMinter {
     nftStakingContract = msg.sender;
     weeklyEmissionDecrease = 9900;
     baseWeeklyEmission = _START_BASE_WEEKLY_EMISSION;
-    activePeriod = (block.timestamp + (warmingUpPeriod * _WEEK)) / _WEEK * _WEEK;
+    activePeriod = (block.timestamp + _WEEK) / _WEEK * _WEEK;
   }
 
   function setTreasury(address _treasury) external {
@@ -138,11 +140,16 @@ contract FldxMinter is IMinter {
   function _calculateGrowth(uint _minted) internal view returns (uint) {
     uint _veTotal = IUnderlying(address(ve)).totalSupply();
     uint _fldxTotal = token.totalSupply();
-    return
-    (((((_minted * _veTotal) / _fldxTotal) * _veTotal) / _fldxTotal) *
+    uint rebase = (((((_minted * _veTotal) / _fldxTotal) * _veTotal) / _fldxTotal) *
     _veTotal) /
     _fldxTotal /
     2;
+
+    if (rebase > _minted * _MAX_REBASE_EMISSION_PERCENTAGE / PRECISION) {
+      return _minted * _MAX_REBASE_EMISSION_PERCENTAGE / PRECISION;
+    } else {
+      return rebase;
+    }
   }
 
   /// @dev Update period can only be called once per cycle (1 week)

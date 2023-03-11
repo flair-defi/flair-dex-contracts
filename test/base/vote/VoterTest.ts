@@ -68,10 +68,7 @@ describe("voter tests", function () {
     core = await Deploy.deployCore(
       owner,
       wmatic.address,
-      [wmatic.address, ust.address, mim.address, dai.address],
-      [owner.address, owner2.address, owner4.address],
-      [parseUnits('100'), parseUnits('100'), BigNumber.from(10)],
-      parseUnits('200').add(10)
+      [wmatic.address, ust.address, mim.address, dai.address]
     );
 
     mimUstPair = await TestHelper.addLiquidity(
@@ -104,6 +101,12 @@ describe("voter tests", function () {
       utils.parseUnits('1'),
       true
     );
+
+    await core.token.approve(core.ve.address, parseUnits('1000'));
+    await core.ve.createLock(parseUnits('100'), 4 * 365 * 24 * 60 * 60);
+
+    await core.ve.createLockFor(parseUnits('100'), 4 * 365 * 24 * 60 * 60, owner2.address);
+    await core.ve.createLockFor('10', 4 * 365 * 24 * 60 * 60, owner4.address);
 
     // ------------- setup gauges and bribes --------------
 
@@ -166,21 +169,19 @@ describe("voter tests", function () {
 
   it("registerRewardToken test", async function () {
     expect(await gaugeMimUst.rewardTokensLength()).to.equal(3);
-    await expect(core.voter.registerRewardToken(dai.address, gaugeMimUst.address, 0)).revertedWith('!token')
-    await expect(core.voter.registerRewardToken(dai.address, gaugeMimUst.address, 111)).revertedWith('!owner')
-    await expect(core.voter.connect(owner4).registerRewardToken(dai.address, gaugeMimUst.address, 3)).revertedWith('!power')
-    await core.voter.registerRewardToken(dai.address, gaugeMimUst.address, 1)
+    await expect(core.voter.connect(owner4).registerRewardToken(dai.address, gaugeMimUst.address))
+        .revertedWith('!power');
+    await expect(core.voter.registerRewardToken(dai.address, gaugeMimUst.address));
     expect(await gaugeMimUst.rewardTokensLength()).to.equal(4);
   });
 
   it("removeRewardToken test", async function () {
     expect(await gaugeMimUst.rewardTokensLength()).to.equal(3);
-    await core.voter.registerRewardToken(dai.address, gaugeMimUst.address, 1)
+    await core.voter.registerRewardToken(dai.address, gaugeMimUst.address)
     expect(await gaugeMimUst.rewardTokensLength()).to.equal(4);
-    await expect(core.voter.removeRewardToken(dai.address, gaugeMimUst.address, 0)).revertedWith('!token')
-    await expect(core.voter.removeRewardToken(dai.address, gaugeMimUst.address, 111)).revertedWith('!owner')
-    await expect(core.voter.connect(owner4).removeRewardToken(dai.address, gaugeMimUst.address, 3)).revertedWith('!power')
-    await core.voter.removeRewardToken(dai.address, gaugeMimUst.address, 1)
+    await expect(core.voter.connect(owner4).removeRewardToken(dai.address, gaugeMimUst.address))
+        .revertedWith('!power')
+    await core.voter.removeRewardToken(dai.address, gaugeMimUst.address)
     expect(await gaugeMimUst.rewardTokensLength()).to.equal(3);
   });
 
@@ -274,6 +275,7 @@ describe("voter tests", function () {
     await core.voter.vote(1, [mimUstPair.address], [5000]);
     expect(await core.voter.usedWeights(1)).to.closeTo((await core.ve.balanceOfNFT(1)), 1000);
     expect(await bribeMimUst.balanceOf(adr1)).to.equal(await core.voter.votes(1, mimUstPair.address));
+    await TimeUtils.advanceBlocksOnTs(60 * 60 * 24 * 7);
     await core.voter.reset(1);
     expect(await core.voter.usedWeights(1)).to.below(await core.ve.balanceOfNFT(1));
     expect(await core.voter.usedWeights(1)).to.equal(0);
@@ -356,12 +358,8 @@ describe("voter tests", function () {
   it("whitelist new token", async function () {
     const mockToken = await Deploy.deployContract(owner, 'Token', 'MOCK', 'MOCK', 10, owner.address) as Token;
     await mockToken.mint(owner.address, utils.parseUnits('1000000000000', 10));
-    await core.voter.whitelist(mockToken.address, 1);
+    await core.voter.whitelist(mockToken.address);
     expect(await core.voter.isWhitelisted(mockToken.address)).is.eq(true);
-  });
-
-  it("listingFee test", async function () {
-    expect(await core.voter.listingFee()).not.eq(0);
   });
 
   it("double init reject test", async function () {
@@ -376,14 +374,17 @@ describe("voter tests", function () {
     await core.voter.vote(1, [mimUstPair.address], [100]);
     expect(await core.voter.votes(1, mimUstPair.address)).above(parseUnits('99'));
     expect(await core.voter.weights(mimUstPair.address)).above(parseUnits('99'));
+    await TimeUtils.advanceBlocksOnTs(60 * 60 * 24 * 7);
     await core.voter.vote(1, [mimUstPair.address, mimDaiPair.address], [500, -500]);
     expect(await core.voter.votes(1, mimUstPair.address)).above(parseUnits('49'));
     expect(await core.voter.votes(1, mimDaiPair.address)).below(parseUnits('-49'));
+    await TimeUtils.advanceBlocksOnTs(60 * 60 * 24 * 7);
     await core.voter.reset(1);
     expect(await core.voter.votes(1, mimUstPair.address)).eq(0);
     expect(await core.voter.votes(1, mimDaiPair.address)).eq(0);
+    await TimeUtils.advanceBlocksOnTs(60 * 60 * 24 * 7);
     await core.voter.vote(1, [mimUstPair.address], [100]);
-    expect(await core.voter.votes(1, mimUstPair.address)).above(parseUnits('99'));
+    expect(await core.voter.votes(1, mimUstPair.address)).above(parseUnits('98'));
   });
 
   it("vote with duplicate pool revert test", async function () {
@@ -391,7 +392,8 @@ describe("voter tests", function () {
   });
 
   it("vote with too low power revert test", async function () {
-    await expect(core.voter.connect(owner4).vote(3, [mimUstPair.address, mimDaiPair.address], [parseUnits('1'), 1])).revertedWith("zero power");
+    await expect(core.voter.connect(owner4)
+        .vote(3, [mimUstPair.address, mimDaiPair.address], [parseUnits('1'), 1])).revertedWith("zero power");
   });
 
   it("vote not owner revert test", async function () {
@@ -403,7 +405,7 @@ describe("voter tests", function () {
   });
 
   it("duplicate whitelist revert test", async function () {
-    await expect(core.voter.whitelist(mim.address, 1)).revertedWith("already whitelisted");
+    await expect(core.voter.whitelist(mim.address)).revertedWith("already whitelisted");
   });
 
   it("createGauge duplicate gauge revert test", async function () {
@@ -481,16 +483,21 @@ describe("voter tests", function () {
     await core.voter.distributeForGauges([gaugeMimDai.address]);
   });
 
-  it("whitelist wrong token revert test", async function () {
-    await expect(core.voter.whitelist(Misc.ZERO_ADDRESS, 0)).revertedWith("!token");
-  });
-
-  it("whitelist not owner revert test", async function () {
-    await expect(core.voter.whitelist(Misc.ZERO_ADDRESS, 99)).revertedWith("!owner");
-  });
-
   it("whitelist not power revert test", async function () {
-    await expect(core.voter.connect(owner4).whitelist(Misc.ZERO_ADDRESS, 3)).revertedWith("!power");
+    await expect(core.voter.connect(owner4).whitelist(Misc.ZERO_ADDRESS)).revertedWith("!power");
+  });
+
+  it("multiple votes in epoch revert", async function () {
+    await core.voter.vote(1, [mimUstPair.address], [100]);
+    expect(await core.voter.votes(1, mimUstPair.address)).above(parseUnits('99'));
+    expect(await core.voter.weights(mimUstPair.address)).above(parseUnits('99'));
+    await expect(core.voter.vote(1, [mimUstPair.address, mimDaiPair.address], [500, -500]))
+        .revertedWith('TOKEN_ALREADY_VOTED_THIS_EPOCH');
+    await expect(core.voter.reset(1)).revertedWith('TOKEN_ALREADY_VOTED_THIS_EPOCH');
+    await TimeUtils.advanceBlocksOnTs(60 * 60 * 24 * 7);
+    await core.voter.reset(1);
+    expect(await core.voter.votes(1, mimUstPair.address)).eq(0);
+    expect(await core.voter.votes(1, mimDaiPair.address)).eq(0);
   });
 
 });

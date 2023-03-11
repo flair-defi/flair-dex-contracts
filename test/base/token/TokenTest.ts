@@ -88,10 +88,11 @@ describe("token tests", function () {
 
   it("transfer from to too much reject", async function () {
     const minter = await Misc.impersonate(await core.token.minter());
+    expect(await core.token.balanceOf(owner.address)).eq(BigNumber.from('48000000000000000000000000'));
     await core.token.connect(minter).mint(owner2.address, 100);
     await core.token.connect(owner2).approve(owner.address, 100);
     await core.token.transferFrom(owner2.address, owner.address, 100);
-    expect(await core.token.balanceOf(owner.address)).eq(100);
+    expect(await core.token.balanceOf(owner.address)).eq(BigNumber.from('48000000000000000000000100'));
     expect(await core.token.balanceOf(owner2.address)).eq(0);
     await expect(core.token.transferFrom(owner2.address, owner.address, 1)).revertedWith('FLDX: Insufficient allowance')
   });

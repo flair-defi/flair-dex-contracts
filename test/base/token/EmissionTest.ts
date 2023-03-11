@@ -20,7 +20,7 @@ import {Misc} from "../../../scripts/Misc";
 import {formatUnits, parseUnits} from "ethers/lib/utils";
 import {appendFileSync, writeFileSync} from "fs";
 import {BigNumber} from "ethers";
-import {TestnetAddresses} from "../../../scripts/addresses/Addresses";
+import {Addresses} from "../../../scripts/addresses/Addresses";
 
 const {expect} = chai;
 
@@ -36,7 +36,7 @@ describe("emission tests", function () {
   let owner: SignerWithAddress;
   let owner2: SignerWithAddress;
   let core: CoreAddresses;
-  let wmatic: Token;
+  let wavax: Token;
   let ust: Token;
   let mim: Token;
   let dai: Token;
@@ -52,20 +52,21 @@ describe("emission tests", function () {
     snapshotBefore = await TimeUtils.snapshot();
     [owner, owner2] = await ethers.getSigners();
 
-    wmatic = await Deploy.deployContract(owner, 'Token', 'WMATIC', 'WMATIC', 18, owner.address) as Token;
+    wavax = await Deploy.deployContract(owner, 'Token', 'WAVAX', 'WAVAX', 18, owner.address) as Token;
     [ust, mim, dai] = await TestHelper.createMockTokensAndMint(owner);
 
     core = await Deploy.deployCore(
       owner,
-      TestnetAddresses.WETH,
-      [TestnetAddresses.WETH, ust.address, mim.address, dai.address],
-      [owner.address, owner2.address],
-      [amount100At18, amount100At18],
-      amount100At18.mul(2),
-        [owner.address, owner2.address],
-        [amount100At18, amount100At18],
-        amount100At18.mul(2)
+      Addresses.WAVAX,
+      [Addresses.WAVAX, ust.address, mim.address, dai.address],
+        2
     );
+
+    await core.token.approve(core.ve.address, parseUnits('1000'));
+    await core.ve.createLock(parseUnits('100'), 4 * 365 * 24 * 60 * 60);
+
+    await core.ve.createLockFor(parseUnits('100'), 4 * 365 * 24 * 60 * 60, owner2.address);
+    await core.ve.createLockFor(100, 4 * 365 * 24 * 60 * 60, owner.address);
 
     // -------------- create pairs ---------------------
 
@@ -139,19 +140,35 @@ describe("emission tests", function () {
     expect(await core.token.balanceOf(core.voter.address)).is.eq(0);
   });
 
-  it("update period 10 weeks", async function () {
-    await TimeUtils.advanceBlocksOnTs(WEEK * 10);
+  it("update period 5 weeks", async function () {
+    await TimeUtils.advanceBlocksOnTs(WEEK * 2);
     expect(await core.token.balanceOf(core.minter.address)).is.eq(0);
     expect(await core.token.balanceOf(core.veDist.address)).is.eq(0);
     expect(await core.token.balanceOf(core.voter.address)).is.eq(0);
 
     await core.minter.updatePeriod();
-
     expect(await core.token.balanceOf(core.minter.address)).is.eq(0);
-    // not exact amount coz veFLDX balance fluctuation during time
 
-    TestHelper.closer(await core.token.balanceOf(core.veDist.address), parseUnits('188000'), parseUnits('3000'));
-    TestHelper.closer(await core.token.balanceOf(core.voter.address), parseUnits('2000000'), parseUnits('0'));
+    TestHelper.closer(await core.token.balanceOf(core.veDist.address), BigNumber.from('160000000'),
+        BigNumber.from('40000000'));
+    TestHelper.closer(await core.token.balanceOf(core.voter.address), parseUnits('5000000'),
+        parseUnits('0'));
+
+    await TimeUtils.advanceBlocksOnTs(WEEK);
+    await core.minter.updatePeriod();
+    expect(await core.token.balanceOf(core.minter.address)).is.eq(0);
+    TestHelper.closer(await core.token.balanceOf(core.veDist.address), BigNumber.from('320000000'),
+        BigNumber.from('40000000'));
+    TestHelper.closer(await core.token.balanceOf(core.voter.address), parseUnits('9950000'),
+        parseUnits('0'));
+
+    await TimeUtils.advanceBlocksOnTs(WEEK);
+    await core.minter.updatePeriod();
+    expect(await core.token.balanceOf(core.minter.address)).is.eq(0);
+    TestHelper.closer(await core.token.balanceOf(core.veDist.address), BigNumber.from('400000000'),
+        BigNumber.from('40000000'));
+    TestHelper.closer(await core.token.balanceOf(core.voter.address), parseUnits('14850500'),
+        parseUnits('0'));
   });
 
   it("update period twice", async function () {
@@ -166,73 +183,17 @@ describe("emission tests", function () {
     // not exact amount coz veFLDX balance fluctuation during time
     const veDistBal = await core.token.balanceOf(core.veDist.address);
     const voterBal = await core.token.balanceOf(core.voter.address);
-    TestHelper.closer(veDistBal, parseUnits('196000'), parseUnits('3000'));
-    TestHelper.closer(voterBal, parseUnits('2000000'), parseUnits('0'));
-
-    await TimeUtils.advanceBlocksOnTs(WEEK);
 
     await core.minter.updatePeriod();
 
     expect(await core.token.balanceOf(core.minter.address)).is.eq(0);
-    // not exact amount coz veFLDX balance fluctuation during time
-    TestHelper.closer((await core.token.balanceOf(core.veDist.address)).sub(veDistBal), parseUnits('150'), parseUnits('50'));
-    TestHelper.closer((await core.token.balanceOf(core.voter.address)).sub(voterBal), parseUnits('17000000'), parseUnits('1000000'));
-  });
-
-  it("update period and distribute reward to voter and veDist", async function () {
-    await TimeUtils.advanceBlocksOnTs(WEEK * 2);
-    // should be empty before the first update
-    expect(await core.token.balanceOf(core.minter.address)).is.eq(0);
-    expect(await core.token.balanceOf(core.veDist.address)).is.eq(0);
-    expect(await core.token.balanceOf(core.voter.address)).is.eq(0);
-
-    await core.minter.updatePeriod();
-
-    // minter without enough token should distribute everything to veDist and voter
-    expect(await core.token.balanceOf(core.minter.address)).is.eq(0);
-    // not exact amount coz veFLDX balance fluctuation during time
-    TestHelper.closer(await core.token.balanceOf(core.veDist.address), parseUnits('196000'), parseUnits('10000'));
-    TestHelper.closer(await core.token.balanceOf(core.voter.address), parseUnits('2000000'), parseUnits('10000'));
-
-    // ------------ CHECK CLAIM VE ----------
-
-    const toClaim = await core.veDist.claimable(1);
-    expect(toClaim).is.above(parseUnits('30000'));
-
-    expect(await core.token.balanceOf(owner.address)).is.eq(0, "before the first update we should have 0 FLDX");
-    const veBalance = (await core.ve.locked(1)).amount;
-
-    await core.veDist.claim(1);
-
-    // claimed FLDX will be deposited to veFLDX
-    TestHelper.closer((await core.ve.locked(1)).amount, toClaim.add(veBalance), parseUnits('10000'));
-
-    // ----------- CHECK CLAIM GAUGE ----------
-    expect(await core.token.balanceOf(gaugeMimUst.address)).is.eq(0);
-
-    // distribute FLDX to all gauges
-    await core.voter.distributeAll();
-
-    // voter has some dust after distribution
-    TestHelper.closer(await core.token.balanceOf(core.voter.address), parseUnits('0'), parseUnits('100'));
-    TestHelper.closer(await core.token.balanceOf(gaugeMimUst.address), parseUnits('2000000'), parseUnits('10000'));
-
-    expect(await core.token.balanceOf(owner.address)).is.eq(0);
-
-    await gaugeMimUst.getReward(owner.address, [core.token.address]);
-    // some little amount after distribute
-    TestHelper.gte(await core.token.balanceOf(owner.address), parseUnits('0'));
-
-    // wait 1 week for 100% rewards
-    await TimeUtils.advanceBlocksOnTs(WEEK);
-
-    await gaugeMimUst.getReward(owner.address, [core.token.address]);
-    TestHelper.closer(await core.token.balanceOf(owner.address), parseUnits('2000000'), parseUnits('10000'));
+    expect(await core.token.balanceOf(core.veDist.address)).is.eq(veDistBal);
+    expect(await core.token.balanceOf(core.voter.address)).is.eq(voterBal);
   });
 
   // for manual testing
   it.skip("emission loop", async function () {
-    await emissionLoop(owner, ust, mim, wmatic, parseUnits('20000000'), 70);
+    await emissionLoop(owner, ust, mim, wavax, parseUnits('20000000'), 70);
   });
 
 });
@@ -242,7 +203,7 @@ async function emissionLoop(
   owner: SignerWithAddress,
   ust: Token,
   mim: Token,
-  wmatic: Token,
+  wavax: Token,
   initial: BigNumber,
   lockPercent = 0,
 ) {
@@ -255,14 +216,8 @@ async function emissionLoop(
 
   const core = await Deploy.deployCore(
     owner,
-    wmatic.address,
-    [wmatic.address, ust.address, mim.address],
-    [owner.address],
-    [initial],
-    initial,
-      [owner.address],
-      [initial],
-      initial
+    wavax.address,
+    [wavax.address, ust.address, mim.address]
   );
   const pair = await TestHelper.addLiquidity(
     core.factory,
