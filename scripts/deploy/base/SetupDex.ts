@@ -1,12 +1,12 @@
 import {Deploy} from "../Deploy";
 import {ethers} from "hardhat";
 import {writeFileSync} from "fs";
-import {TestnetAddresses} from "../../addresses/Addresses";
+import {Addresses} from "../../addresses/Addresses";
 
 async function main() {
   const signer = (await ethers.getSigners())[0];
 
-  const core = await Deploy.deployDex(signer, TestnetAddresses.WETH)
+  const core = await Deploy.deployDex(signer, Addresses.WAVAX)
 
   const data = ''
     + 'factory: ' + core[0].address + '\n'

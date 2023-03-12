@@ -226,6 +226,10 @@ export class Deploy {
   ) {
     const controller = await Deploy.deployContract(signer, 'Controller') as Controller;
     const token = await Deploy.deployFldx(signer);
+    // premint liquidity + team tokens + marketing + advisors + unallocated community tokens
+    // 20M + 10M + 4M + 1M + 13M
+    await Misc.runAndWait(() => token.mint(signer.address, '48000000000000000000000000'))
+
     const ve = await Deploy.deployVe(signer, token.address, controller.address);
     const gaugesFactory = await Deploy.deployGaugeFactory(signer);
     const bribesFactory = await Deploy.deployBribeFactory(signer);
@@ -239,13 +243,9 @@ export class Deploy {
     const merkleVeNFTClaim = await Deploy.deployMerkleVeNFTClaim(signer, token.address, ve.address,
         Addresses.veNFTMerkleRoot);
 
-    // premint liquidity + team tokens + marketing + advisors + unallocated community tokens
-    // 20M + 10M + 4M + 1M + 13M
-    await Misc.runAndWait(() => token.mint(signer.address, '48000000000000000000000000'))
-
-    await Misc.runAndWait(() => token.setMinter(minter.address));
     await Misc.runAndWait(() => token.setMerkleClaim(merkleClaim.address));
     await Misc.runAndWait(() => token.setMerkleNFTClaim(merkleVeNFTClaim.address));
+    await Misc.runAndWait(() => token.setMinter(minter.address));
     await Misc.runAndWait(() => veDist.setDepositor(minter.address));
     await Misc.runAndWait(() => controller.setVeDist(veDist.address));
     await Misc.runAndWait(() => controller.setVoter(voter.address));

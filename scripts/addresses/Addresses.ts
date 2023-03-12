@@ -7,15 +7,15 @@ export class Addresses {
   public static ZERO_ADDRESS = "0x0000000000000000000000000000000000000000";
 
   // tokens
-  public static WAVAX = "".toLowerCase();
+  public static WAVAX = "0xd00ae08403B9bbb9124bB305C09058E32C39A48c".toLowerCase();
   public static USDC = "".toLowerCase();
 
   // todo:: add more tokens including partner token
 
-  public static FACTORY = "".toLowerCase();
+  public static FACTORY = "0xf37088c9393bF3fE4743C161681570331B65C69A".toLowerCase();
 
-  public static merkleRoot = "0xc320d26d2bee9f708de1bb1516af0db005ae86f1ee6f3b38b91de0c912fb0cc8";
-  public static veNFTMerkleRoot = "0xf7604fe356a08f73bb1d6cc3eacc7e14e8b3edb5c1ee8f04af5e42bcc43ea0cb";
+  public static merkleRoot = "0xffa594b32f212e7d9eb65fd76641b19d42fcabfae8190972a7f97aa544fe7de3";
+  public static veNFTMerkleRoot = "0x527e57fbe2fec7b26bb07287c9abc6f02586df3d7b50769c3e864d7fdff67e26";
 
 }
 

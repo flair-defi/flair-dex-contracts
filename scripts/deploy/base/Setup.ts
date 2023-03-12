@@ -1,16 +1,16 @@
 import {Deploy} from "../Deploy";
 import {ethers} from "hardhat";
 import {BigNumber} from "ethers";
-import {Addresses, TestnetAddresses} from "../../addresses/Addresses";
+import {Addresses} from "../../addresses/Addresses";
 import {writeFileSync} from "fs";
 
 const voterTokens = [
-    "0x2C6BCF9507A6a8dF60b5C0f25003982F4e631923",
-    "0x779d4D3A8B0E75219E653Ab310DD76B01333e534",
-    "0xcb4aA0C195100297a7A845832F2b4e6C743D8756",
-    "0xDD437EbC9a0373e426CEF84680cc06Cb7d1F1645",
-    "0x6782D826c0627e33980aF038dCa09cf7CDb0E6a2",
-    TestnetAddresses.WETH
+    "0x8b146d71a2b075407F1C4e8f2092f4FFe6d626B8",
+    "0x8f7CE78Efd713811cB9327F233dCBcae0C43F062",
+    "0x41fF64E47E35d9eC56Def353E15FBE3A27bec5eA",
+    "0xa03cc635595F0607622222cD15822cf4f1Bcd411",
+    "0xEB7B885CF774aAB4C658123fB2bDC1096ee3B175",
+    Addresses.WAVAX
 ];
 const WARMING = 0;
 
