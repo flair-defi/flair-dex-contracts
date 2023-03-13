@@ -62,8 +62,7 @@ contract FldxMinter is IMinter {
 
   constructor(
     address ve_, // the ve(3,3) system that will be locked into
-    address controller_, // controller with veDist and voter addresses
-    uint warmingUpPeriod // 2 by default
+    address controller_ // controller with veDist and voter addresses
   ) {
     initializer = msg.sender;
     token = IUnderlying(IVe(ve_).token());

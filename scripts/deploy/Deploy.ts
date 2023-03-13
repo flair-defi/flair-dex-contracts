@@ -152,15 +152,13 @@ export class Deploy {
   public static async deployFldxMinter(
     signer: SignerWithAddress,
     ve: string,
-    controller: string,
-    warmingUpPeriod: number
+    controller: string
   ) {
     return (await Deploy.deployContract(
       signer,
       'FldxMinter',
       ve,
-      controller,
-      warmingUpPeriod,
+      controller
     )) as FldxMinter;
   }
 
@@ -237,7 +235,7 @@ export class Deploy {
     const veDist = await Deploy.deployVeDist(signer, ve.address);
     const voter = await Deploy.deployFldxVoter(signer, ve.address, baseFactory, gaugesFactory.address, bribesFactory.address);
 
-    const minter = await Deploy.deployFldxMinter(signer, ve.address, controller.address, warmingUpPeriod);
+    const minter = await Deploy.deployFldxMinter(signer, ve.address, controller.address);
 
     const merkleClaim = await Deploy.deployMerkleClaim(signer, token.address, Addresses.merkleRoot);
     const merkleVeNFTClaim = await Deploy.deployMerkleVeNFTClaim(signer, token.address, ve.address,
