@@ -613,6 +613,7 @@ contract Ve is IERC721, IERC721Metadata, IVe, Reentrancy {
 
   function merge(uint _from, uint _to) external {
     require(attachments[_from] == 0 && !voted[_from], "attached");
+    require(!voted[_to], "attached");
     require(_from != _to, "the same");
     require(_isApprovedOrOwner(msg.sender, _from), "!owner from");
     require(_isApprovedOrOwner(msg.sender, _to), "!owner to");
