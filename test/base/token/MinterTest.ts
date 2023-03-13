@@ -5,7 +5,7 @@ import {Deploy} from "../../../scripts/deploy/Deploy";
 import {TimeUtils} from "../../TimeUtils";
 import {BigNumber, utils} from "ethers";
 import {CoreAddresses} from "../../../scripts/deploy/CoreAddresses";
-import {Controller, FldxPair, Token} from "../../../typechain";
+import {Controller, FldxPair, Gauge, Gauge__factory, Token} from "../../../typechain";
 import {TestHelper} from "../../TestHelper";
 import {parseUnits} from "ethers/lib/utils";
 import {Misc} from "../../../scripts/Misc";
@@ -25,7 +25,7 @@ describe("minter tests", function () {
   let mim: Token;
   let dai: Token;
   let pair: FldxPair;
-  // let gauge: Gauge;
+  let gauge: Gauge;
 
 
   before(async function () {
@@ -37,9 +37,6 @@ describe("minter tests", function () {
       owner,
       wmatic.address,
       [wmatic.address, ust.address, mim.address, dai.address],
-      [owner.address, owner2.address],
-      [utils.parseUnits('100'), utils.parseUnits('100')],
-      utils.parseUnits('200'),
       2
     );
 
@@ -55,10 +52,20 @@ describe("minter tests", function () {
       parseUnits('1', 6),
       true
     );
+    await core.token.approve(core.ve.address, parseUnits('1000'));
+    await core.ve.createLock(parseUnits('100'), 4 * 365 * 24 * 60 * 60);
+
+    await core.ve.createLockFor(parseUnits('100'), 4 * 365 * 24 * 60 * 60, owner2.address);
+    await core.ve.createLockFor(100, 4 * 365 * 24 * 60 * 60, owner.address);
+
+    const minter = await Misc.impersonate(core.minter.address);
+    await core.token.connect(minter).mint(owner.address, parseUnits('100'));
+    await core.token.approve(core.ve.address, BigNumber.from("1500000000000000000000000"));
+    await core.ve.createLock(100, 7*60*60*1000);
     await core.voter.createGauge(pair.address);
-    // const gaugeMimUstAddress = await core.voter.gauges(pair.address);
-    // gauge = Gauge__factory.connect(gaugeMimUstAddress, owner);
-    // await TestHelper.depositToGauge(owner, gauge, pair, parseUnits('0.0001'), 0);
+    const gaugeMimUstAddress = await core.voter.gauges(pair.address);
+    gauge = Gauge__factory.connect(gaugeMimUstAddress, owner);
+    await TestHelper.depositToGauge(owner, gauge, pair, parseUnits('0.001', 6), 0);
     await core.voter.vote(1, [pair.address], [100]);
   });
 
@@ -75,54 +82,46 @@ describe("minter tests", function () {
     await TimeUtils.rollback(snapshot);
   });
 
-  it("circulating_supply test", async function () {
-    expect(await core.minter.circulatingSupply()).is.not.eq(BigNumber.from('0'));
+  it("set treasury unauthorized", async function() {
+    await expect(core.minter.connect(owner2).setTreasury(owner2.address)).revertedWith("Not treasury");
   });
 
-  it("calculate_emission test", async function () {
-    expect(await core.minter.calculateEmission()).is.eq(BigNumber.from('2000000000000000000000000'));
+  it("initial circulating_supplypost deployment test", async function () {
+    expect(await core.minter.circulatingSupply()).is.lte(BigNumber.from('48000000000000000000000000'));
   });
 
   it("weekly_emission test", async function () {
-    expect(await core.minter.weeklyEmission()).is.eq(BigNumber.from('2000000000000000000000000'));
+    expect(await core.minter.weeklyEmission()).is.eq(BigNumber.from('5000000000000000000000000'));
   });
 
   it("circulating_emission test", async function () {
     expect(await core.minter.circulatingEmission()).is.not.eq(BigNumber.from('0'));
   });
 
-  it("double init reject", async function () {
-    await expect(core.minter.initialize([], [], 0)).revertedWith("Not initializer")
-  });
-
-  it("wrong total amount test", async function () {
-    const controller = await Deploy.deployContract(owner, 'Controller') as Controller;
-    const treasury = await Deploy.deployGovernanceTreasury(owner);
-    const gaugesFactory = await Deploy.deployGaugeFactory(owner);
-    const bribesFactory = await Deploy.deployBribeFactory(owner);
-    const baseFactory = await Deploy.deployFldxFactory(owner, treasury.address);
-    const token = await Deploy.deployContract(owner, 'Token', 'VE', 'VE', 18, owner.address) as Token;
-    const ve = await Deploy.deployVe(owner, token.address, controller.address);
-    const veDist = await Deploy.deployVeDist(owner, ve.address);
-    const voter = await Deploy.deployFldxVoter(owner, ve.address, baseFactory.address, gaugesFactory.address, bribesFactory.address);
-    await controller.setVeDist(veDist.address)
-    await controller.setVoter(voter.address)
-    const minter = await Deploy.deployFldxMinter(owner, ve.address, controller.address, 1);
-    console.log((await minter.activePeriod()).toString());
-    await expect(minter.initialize([owner.address], [1], 2)).revertedWith('Wrong totalAmount')
-  });
-
-
-  it("reach weekly threshold", async function () {
+  it("reach first threshold", async function () {
     await TimeUtils.advanceBlocksOnTs(60 * 60 * 24 * 7 * 2)
+    let numEpoch = 0;
     while (true) {
-      await TimeUtils.advanceBlocksOnTs(60 * 60 * 24 * 7)
+      numEpoch += 1
       await core.minter.updatePeriod();
-      const c = await core.minter.initialStubCirculation();
-      const circulatingEmission = await core.minter.circulatingEmission();
-      console.log(c.toString(), circulatingEmission.toString());
-      if (c.lte(circulatingEmission)) {
-        break;
+      await TimeUtils.advanceBlocksOnTs(60 * 60 * 24 * 7)
+      if (numEpoch === 53) {
+        expect(await core.minter.weeklyEmissionDecrease()).eq(9950);
+        return;
+      }
+    }
+  });
+
+  it("reach second threshold", async function () {
+    await TimeUtils.advanceBlocksOnTs(60 * 60 * 24 * 7 * 2)
+    let numEpoch = 0;
+    while (true) {
+      numEpoch += 1
+      await core.minter.updatePeriod();
+      await TimeUtils.advanceBlocksOnTs(60 * 60 * 24 * 7)
+      if (numEpoch === 105) {
+        expect(await core.minter.weeklyEmissionDecrease()).eq(9975);
+        return;
       }
     }
   });

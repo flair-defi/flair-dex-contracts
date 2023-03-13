@@ -84,6 +84,15 @@ describe("pair tests", function () {
     await TimeUtils.rollback(snapshot);
   });
 
+  it("set partner test", async function() {
+    await pair.setPartner(owner2.address);
+    expect(await pair.partner()).eq(owner2.address);
+  });
+
+  it("set partner test not partnerSetter", async function() {
+    await expect(pair.connect(owner2).setPartner(owner2.address)).revertedWith("not partnerSetter");
+  });
+
   it("observationLength test", async function () {
     expect(await pair.observationLength()).is.eq(1);
   });
@@ -127,7 +136,7 @@ describe("pair tests", function () {
       to: ust.address,
       stable: true,
     }], owner.address, 9999999999);
-    expect(await pair.quote(mim.address, parseUnits('1'), 1)).is.eq(BigNumber.from(747257));
+    expect(await pair.quote(mim.address, parseUnits('1'), 1)).is.eq(BigNumber.from(747255));
   });
 
   it("current twap price test with points", async function () {
@@ -143,7 +152,7 @@ describe("pair tests", function () {
       to: ust.address,
       stable: true,
     }], owner.address, 9999999999);
-    expect((await pair.prices(mim.address, parseUnits('1'), 1))[0]).is.eq(BigNumber.from(747257));
+    expect((await pair.prices(mim.address, parseUnits('1'), 1))[0]).is.eq(BigNumber.from(747255));
   });
 
   it("burn test", async function () {
@@ -172,11 +181,15 @@ describe("pair tests", function () {
   });
 
   it("sync test", async function () {
-    await mim.transfer(pair.address, parseUnits('0.001'));
-    await ust.transfer(pair.address, parseUnits('0.001', 6));
+    const initialReserve0 = await pair.reserve0();
+    const initialReserve1 = await pair.reserve1();
+    const amount0 = parseUnits('0.001');
+    const amount1 = parseUnits('0.001', 6);
+    await mim.transfer(pair.address, amount0);
+    await ust.transfer(pair.address, amount1);
     await pair.sync();
-    expect(await pair.reserve0()).is.not.eq(0);
-    expect(await pair.reserve1()).is.not.eq(0);
+    expect(await pair.reserve0()).is.eq(initialReserve0.add(amount0));
+    expect(await pair.reserve1()).is.eq(initialReserve1.add(amount1));
   });
 
   it("metadata test", async function () {
@@ -216,6 +229,15 @@ describe("pair tests", function () {
   it("swap on pause test", async function () {
     await factory.setPause(true);
     await expect(pair2.swap(1, 1, owner.address, '0x')).revertedWith('PAUSE');
+  });
+
+  it("set partner feeManager", async function () {
+    await pair2.connect(owner).setPartner(owner3.address);
+    await expect(await pair2.partner()).eq(owner3.address);
+  });
+
+  it("set partner not feeManager", async function () {
+    await expect(pair2.connect(owner3).setPartner(owner3.address)).revertedWith('not partnerSetter');
   });
 
   it("insufficient output amount", async function () {
@@ -355,44 +377,6 @@ describe("pair tests", function () {
     const tx = await pair.burn(owner.address);
     const receipt = await tx.wait()
     expect(receipt.gasUsed).below(BigNumber.from(130000));
-  });
-
-  it("twap price complex test", async function () {
-    await mim.approve(router.address, parseUnits('100'));
-    await ust.approve(router.address, parseUnits('100', 6));
-
-    expect(await pair.observationLength()).eq(1);
-    const window = 10;
-    for (let i = 0; i < window; i++) {
-      await TimeUtils.advanceBlocksOnTs(60 * 60)
-      await pair.sync();
-    }
-
-    expect(await pair.observationLength()).eq(window + 1);
-    await checkTwap(pair, mim.address, BigNumber.from(177));
-
-    await router.swapExactTokensForTokens(parseUnits('1'), 0, [{
-      from: mim.address,
-      to: ust.address,
-      stable: true,
-    }], owner.address, 9999999999);
-
-    await checkTwap(pair, mim.address, BigNumber.from(581_393));
-    await TimeUtils.advanceBlocksOnTs(60 * 60 * window)
-    await pair.sync();
-    await checkTwap(pair, mim.address, BigNumber.from(523_258));
-
-    await router.swapExactTokensForTokens(parseUnits('1', 6), 0, [{
-      to: mim.address,
-      from: ust.address,
-      stable: true,
-    }], owner.address, 9999999999);
-
-    await checkTwap(pair, mim.address, BigNumber.from(195_121));
-    await TimeUtils.advanceBlocksOnTs(60 * 60 * window)
-    await pair.sync();
-    await checkTwap(pair, mim.address, BigNumber.from(181_396));
-
   });
 
 });

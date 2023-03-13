@@ -15,6 +15,8 @@ contract Fldx is IERC20 {
   mapping(address => mapping(address => uint)) public override allowance;
 
   address public minter;
+  address public merkleClaim;
+  address public merkleNFTClaim;
 
   constructor() {
     minter = msg.sender;
@@ -25,6 +27,16 @@ contract Fldx is IERC20 {
   function setMinter(address _minter) external {
     require(msg.sender == minter, "FLDX: Not minter");
     minter = _minter;
+  }
+
+  function setMerkleClaim(address _merkleClaim) external {
+    require(msg.sender == minter, 'FLDX: Not Minter');
+    merkleClaim = _merkleClaim;
+  }
+
+  function setMerkleNFTClaim(address _merkleNFTClaim) external {
+    require(msg.sender == minter, 'FLDX: Not Minter');
+    merkleNFTClaim = _merkleNFTClaim;
   }
 
   function approve(address _spender, uint _value) external override returns (bool) {
@@ -76,6 +88,12 @@ contract Fldx is IERC20 {
 
   function mint(address account, uint amount) external returns (bool) {
     require(msg.sender == minter, "FLDX: Not minter");
+    _mint(account, amount);
+    return true;
+  }
+
+  function claim(address account, uint amount) external returns (bool) {
+    require(msg.sender == merkleClaim || msg.sender == merkleNFTClaim, 'not authorized claimant');
     _mint(account, amount);
     return true;
   }

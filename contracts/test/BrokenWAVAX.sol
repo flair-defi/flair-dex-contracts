@@ -3,7 +3,7 @@
 pragma solidity ^0.8.13;
 
 
-contract BrokenWMATIC {
+contract BrokenWAVAX {
 
   uint public i;
 

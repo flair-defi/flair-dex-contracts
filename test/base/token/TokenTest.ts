@@ -5,7 +5,7 @@ import chai from "chai";
 import {Deploy} from "../../../scripts/deploy/Deploy";
 import {TimeUtils} from "../../TimeUtils";
 import {TestHelper} from "../../TestHelper";
-import {utils} from "ethers";
+import {BigNumber, utils} from "ethers";
 import {CoreAddresses} from "../../../scripts/deploy/CoreAddresses";
 import {Misc} from "../../../scripts/Misc";
 
@@ -43,10 +43,8 @@ describe("token tests", function () {
     core = await Deploy.deployCore(
       owner,
       wmatic.address,
-      [wmatic.address, ust.address, mim.address, dai.address],
-      [owner.address, owner2.address],
-      [utils.parseUnits('100'), utils.parseUnits('100')],
-      utils.parseUnits('200')
+        [wmatic.address, ust.address, mim.address, dai.address],
+      2
     );
   });
 
@@ -67,8 +65,12 @@ describe("token tests", function () {
     await expect(core.token.setMinter(Misc.ZERO_ADDRESS)).revertedWith('FLDX: Not minter')
   });
 
-  it("approve reject", async function () {
-    await expect(core.token.approve(Misc.ZERO_ADDRESS, 0)).revertedWith('FLDX: Approve to the zero address')
+  it("set merkle claim reject", async function () {
+    await expect(core.token.connect(owner2).setMerkleClaim(wmatic.address)).revertedWith('FLDX: Not Minter')
+  });
+
+  it("set merkle NFT claim reject", async function () {
+    await expect(core.token.connect(owner2).setMerkleNFTClaim(wmatic.address)).revertedWith('FLDX: Not Minter')
   });
 
   it("mint to zero address reject", async function () {
@@ -86,10 +88,11 @@ describe("token tests", function () {
 
   it("transfer from to too much reject", async function () {
     const minter = await Misc.impersonate(await core.token.minter());
+    expect(await core.token.balanceOf(owner.address)).eq(BigNumber.from('48000000000000000000000000'));
     await core.token.connect(minter).mint(owner2.address, 100);
     await core.token.connect(owner2).approve(owner.address, 100);
     await core.token.transferFrom(owner2.address, owner.address, 100);
-    expect(await core.token.balanceOf(owner.address)).eq(100);
+    expect(await core.token.balanceOf(owner.address)).eq(BigNumber.from('48000000000000000000000100'));
     expect(await core.token.balanceOf(owner2.address)).eq(0);
     await expect(core.token.transferFrom(owner2.address, owner.address, 1)).revertedWith('FLDX: Insufficient allowance')
   });

@@ -7,11 +7,11 @@ import {utils} from "ethers";
 async function main() {
   const signer = (await ethers.getSigners())[0];
 
-  const usdc = await Deploy.deployToken(signer, 'Mock USDC', 'MOCK_USDC', 6);
-  const mim = await Deploy.deployToken(signer, 'Mock MIM', 'MOCK_MIM', 18);
-  const dai = await Deploy.deployToken(signer, 'Mock DAI', 'MOCK_DAI', 18);
-  const usdt = await Deploy.deployToken(signer, 'Mock USDT', 'MOCK_USDT', 6);
-  const mai = await Deploy.deployToken(signer, 'Mock MAI', 'MOCK_MAI', 18);
+  const usdc = await Deploy.deployToken(signer, 'Mock USDC', 'USDC', 6);
+  const mim = await Deploy.deployToken(signer, 'Mock MIM', 'MIM', 18);
+  const dai = await Deploy.deployToken(signer, 'Mock DAI', 'DAI', 18);
+  const usdt = await Deploy.deployToken(signer, 'Mock USDT', 'USDT', 6);
+  const mai = await Deploy.deployToken(signer, 'Mock MAI', 'MAI', 18);
 
   await Misc.runAndWait(() => usdc.mint(signer.address, utils.parseUnits('100000', 6)))
   await Misc.runAndWait(() => mim.mint(signer.address, utils.parseUnits('100000', 18)))

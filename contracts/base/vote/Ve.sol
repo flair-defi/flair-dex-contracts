@@ -613,6 +613,7 @@ contract Ve is IERC721, IERC721Metadata, IVe, Reentrancy {
 
   function merge(uint _from, uint _to) external {
     require(attachments[_from] == 0 && !voted[_from], "attached");
+    require(!voted[_to], "attached");
     require(_from != _to, "the same");
     require(_isApprovedOrOwner(msg.sender, _from), "!owner from");
     require(_isApprovedOrOwner(msg.sender, _to), "!owner to");
@@ -938,7 +939,7 @@ contract Ve is IERC721, IERC721Metadata, IVe, Reentrancy {
     output = string(abi.encodePacked(output, "locked_end ", _toString(_locked_end), '</text><text x="10" y="310" class="base">'));
     output = string(abi.encodePacked(output, "value ", _toString(_value), '</text></svg>'));
 
-    string memory json = Base64.encode(bytes(string(abi.encodePacked('{"name": "lock #', _toString(_tokenId), '", "description": "Flares Dex locks, can be used to boost gauge yields, vote on token emission, and receive bribes", "image": "data:image/svg+xml;base64,', Base64.encode(bytes(output)), '"}'))));
+    string memory json = Base64.encode(bytes(string(abi.encodePacked('{"name": "lock #', _toString(_tokenId), '", "description": "Flair Dex locks, can be used to boost gauge yields, vote on token emission, and receive bribes", "image": "data:image/svg+xml;base64,', Base64.encode(bytes(output)), '"}'))));
     output = string(abi.encodePacked('data:application/json;base64,', json));
   }
 

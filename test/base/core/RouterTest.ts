@@ -24,7 +24,7 @@ describe("router tests", function () {
   let factory: FldxFactory;
   let router: FldxRouter01;
 
-  let wmatic: Token;
+  let weth: Token;
   let ust: Token;
   let mim: Token;
   let dai: Token;
@@ -34,10 +34,10 @@ describe("router tests", function () {
   before(async function () {
     snapshotBefore = await TimeUtils.snapshot();
     [owner, owner2] = await ethers.getSigners();
-    wmatic = await Deploy.deployContract(owner, 'Token', 'WMATIC', 'WMATIC', 18, owner.address) as Token;
-    await wmatic.mint(owner.address, parseUnits('1000'));
+    weth = await Deploy.deployContract(owner, 'Token', 'WAVAX', 'WAVAX', 18, owner.address) as Token;
+    await weth.mint(owner.address, parseUnits('1000'));
     factory = await Deploy.deployFldxFactory(owner, owner.address);
-    router = await Deploy.deployFldxRouter01(owner, factory.address, wmatic.address);
+    router = await Deploy.deployFldxRouter01(owner, factory.address, weth.address);
 
     [ust, mim, dai] = await TestHelper.createMockTokensAndMint(owner);
     await ust.transfer(owner2.address, utils.parseUnits('100', 6));
@@ -122,9 +122,9 @@ describe("router tests", function () {
     );
   });
 
-  it("addLiquidityMATIC test", async function () {
+  it("addLiquidityAVAX test", async function () {
     await mim.approve(router.address, parseUnits('1'));
-    await router.addLiquidityMATIC(
+    await router.addLiquidityAVAX(
       mim.address,
       true,
       parseUnits('1'),
@@ -136,9 +136,9 @@ describe("router tests", function () {
     );
   });
 
-  it("removeLiquidityMATIC test", async function () {
+  it("removeLiquidityAVAX test", async function () {
     await mim.approve(router.address, parseUnits('1'));
-    await router.addLiquidityMATIC(
+    await router.addLiquidityAVAX(
       mim.address,
       true,
       parseUnits('1'),
@@ -149,10 +149,10 @@ describe("router tests", function () {
       {value: parseUnits('10')}
     );
 
-    const pairAdr = await factory.getPair(mim.address, wmatic.address, true);
+    const pairAdr = await factory.getPair(mim.address, weth.address, true);
 
     await FldxPair__factory.connect(pairAdr, owner).approve(router.address, parseUnits('1111'));
-    await router.removeLiquidityMATIC(
+    await router.removeLiquidityAVAX(
       mim.address,
       true,
       parseUnits('0.1'),
@@ -166,7 +166,7 @@ describe("router tests", function () {
 
   it("removeLiquidityWithPermit test", async function () {
     await mim.approve(router.address, parseUnits('1'));
-    await router.addLiquidityMATIC(
+    await router.addLiquidityAVAX(
       mim.address,
       true,
       parseUnits('1'),
@@ -177,7 +177,7 @@ describe("router tests", function () {
       {value: parseUnits('10')}
     );
 
-    const pairAdr = await factory.getPair(mim.address, wmatic.address, true);
+    const pairAdr = await factory.getPair(mim.address, weth.address, true);
     const pair = FldxPair__factory.connect(pairAdr, owner);
 
     const {
@@ -188,7 +188,7 @@ describe("router tests", function () {
 
     await router.removeLiquidityWithPermit(
       mim.address,
-      wmatic.address,
+      weth.address,
       true,
       parseUnits('0.1'),
       0,
@@ -199,9 +199,9 @@ describe("router tests", function () {
     );
   });
 
-  it("removeLiquidityMATICWithPermit test", async function () {
+  it("removeLiquidityAVAXWithPermit test", async function () {
     await mim.approve(router.address, parseUnits('1'));
-    await router.addLiquidityMATIC(
+    await router.addLiquidityAVAX(
       mim.address,
       true,
       parseUnits('1'),
@@ -212,7 +212,7 @@ describe("router tests", function () {
       {value: parseUnits('10')}
     );
 
-    const pairAdr = await factory.getPair(mim.address, wmatic.address, true);
+    const pairAdr = await factory.getPair(mim.address, weth.address, true);
     const pair = FldxPair__factory.connect(pairAdr, owner);
 
     const {
@@ -221,7 +221,7 @@ describe("router tests", function () {
       s
     } = await TestHelper.permitForPair(owner, pair, router.address, parseUnits('0.1'));
 
-    await router.removeLiquidityMATICWithPermit(
+    await router.removeLiquidityAVAXWithPermit(
       mim.address,
       true,
       parseUnits('0.1'),
@@ -236,7 +236,7 @@ describe("router tests", function () {
   it("swapExactTokensForTokensSimple test", async function () {
     await mim.approve(router.address, parseUnits('10'));
 
-    await router.addLiquidityMATIC(
+    await router.addLiquidityAVAX(
       mim.address,
       true,
       parseUnits('1'),
@@ -251,17 +251,17 @@ describe("router tests", function () {
       parseUnits('0.1'),
       0,
       mim.address,
-      wmatic.address,
+      weth.address,
       true,
       owner.address,
       99999999999
     );
   });
 
-  it("swapExactTokensForMATIC test", async function () {
+  it("swapExactTokensForAVAX test", async function () {
     await mim.approve(router.address, parseUnits('10'));
 
-    await router.addLiquidityMATIC(
+    await router.addLiquidityAVAX(
       mim.address,
       true,
       parseUnits('1'),
@@ -272,12 +272,12 @@ describe("router tests", function () {
       {value: parseUnits('10')}
     );
 
-    await router.swapExactTokensForMATIC(
+    await router.swapExactTokensForAVAX(
       parseUnits('0.1'),
       0,
       [{
         from: mim.address,
-        to: wmatic.address,
+        to: weth.address,
         stable: true,
       }],
       owner.address,
@@ -288,7 +288,7 @@ describe("router tests", function () {
   it("UNSAFE_swapExactTokensForTokens test", async function () {
     await mim.approve(router.address, parseUnits('10'));
 
-    await router.addLiquidityMATIC(
+    await router.addLiquidityAVAX(
       mim.address,
       true,
       parseUnits('1'),
@@ -303,7 +303,7 @@ describe("router tests", function () {
       [parseUnits('0.1'), parseUnits('0.1')],
       [{
         from: mim.address,
-        to: wmatic.address,
+        to: weth.address,
         stable: true,
       }],
       owner.address,
@@ -311,10 +311,10 @@ describe("router tests", function () {
     );
   });
 
-  it("swapExactMATICForTokens test", async function () {
+  it("swapExactAVAXForTokens test", async function () {
     await mim.approve(router.address, parseUnits('10'));
 
-    await router.addLiquidityMATIC(
+    await router.addLiquidityAVAX(
       mim.address,
       true,
       parseUnits('1'),
@@ -325,10 +325,10 @@ describe("router tests", function () {
       {value: parseUnits('10')}
     );
 
-    await router.swapExactMATICForTokens(
+    await router.swapExactAVAXForTokens(
       0,
       [{
-        from: wmatic.address,
+        from: weth.address,
         to: mim.address,
         stable: true,
       }],
@@ -340,10 +340,10 @@ describe("router tests", function () {
 
   it("add/remove liquidity with fee token test", async function () {
     await tokenWithFee.approve(router.address, parseUnits('10'));
-    const maticBalance = await owner.getBalance();
+    const ethBalance = await owner.getBalance();
     const tokenBalance = await tokenWithFee.balanceOf(owner.address);
 
-    await router.addLiquidityMATIC(
+    await router.addLiquidityAVAX(
       tokenWithFee.address,
       true,
       parseUnits('1'),
@@ -354,7 +354,7 @@ describe("router tests", function () {
       {value: parseUnits('1')}
     );
 
-    const pairAdr = await factory.getPair(tokenWithFee.address, wmatic.address, true);
+    const pairAdr = await factory.getPair(tokenWithFee.address, weth.address, true);
     const pair = FldxPair__factory.connect(pairAdr, owner);
     const pairBal = await pair.balanceOf(owner.address);
 
@@ -364,7 +364,7 @@ describe("router tests", function () {
       s
     } = await TestHelper.permitForPair(owner, pair, router.address, pairBal);
 
-    await router.removeLiquidityMATICWithPermitSupportingFeeOnTransferTokens(
+    await router.removeLiquidityAVAXWithPermitSupportingFeeOnTransferTokens(
       tokenWithFee.address,
       true,
       pairBal,
@@ -375,9 +375,9 @@ describe("router tests", function () {
       false, v, r, s
     );
 
-    const maticBalanceAfter = await owner.getBalance();
+    const ethBalanceAfter = await owner.getBalance();
     const tokenBalanceAfter = await tokenWithFee.balanceOf(owner.address);
-    TestHelper.closer(maticBalanceAfter, maticBalance, parseUnits('0.1'));
+    TestHelper.closer(ethBalanceAfter, ethBalance, parseUnits('0.1'));
     TestHelper.closer(tokenBalanceAfter, tokenBalance, parseUnits('0.3'));
   });
 
@@ -385,7 +385,7 @@ describe("router tests", function () {
   it("swapExactTokensForTokensSupportingFeeOnTransferTokens test", async function () {
     await tokenWithFee.approve(router.address, parseUnits('10'));
 
-    await router.addLiquidityMATIC(
+    await router.addLiquidityAVAX(
       tokenWithFee.address,
       true,
       parseUnits('1'),
@@ -396,27 +396,27 @@ describe("router tests", function () {
       {value: parseUnits('1')}
     );
 
-    const maticBalance = await owner.getBalance();
+    const ethBalance = await owner.getBalance();
     const tokenBalance = await tokenWithFee.balanceOf(owner.address);
 
     await router.swapExactTokensForTokensSupportingFeeOnTransferTokens(
       parseUnits('0.1'),
       0,
-      [{from: tokenWithFee.address, to: wmatic.address, stable: true}],
+      [{from: tokenWithFee.address, to: weth.address, stable: true}],
       owner.address,
       99999999999
     );
 
-    const maticBalanceAfter = await owner.getBalance();
+    const ethBalanceAfter = await owner.getBalance();
     const tokenBalanceAfter = await tokenWithFee.balanceOf(owner.address);
-    TestHelper.closer(maticBalanceAfter, maticBalance, parseUnits('11'));
+    TestHelper.closer(ethBalanceAfter, ethBalance, parseUnits('11'));
     TestHelper.closer(tokenBalanceAfter, tokenBalance, parseUnits('0.5'));
   });
 
-  it("swapExactMATICForTokensSupportingFeeOnTransferTokens test", async function () {
+  it("swapExactAVAXForTokensSupportingFeeOnTransferTokens test", async function () {
     await tokenWithFee.approve(router.address, parseUnits('10'));
 
-    await router.addLiquidityMATIC(
+    await router.addLiquidityAVAX(
       tokenWithFee.address,
       true,
       parseUnits('1'),
@@ -427,27 +427,27 @@ describe("router tests", function () {
       {value: parseUnits('1')}
     );
 
-    const maticBalance = await owner.getBalance();
+    const ethBalance = await owner.getBalance();
     const tokenBalance = await tokenWithFee.balanceOf(owner.address);
 
-    await router.swapExactMATICForTokensSupportingFeeOnTransferTokens(
+    await router.swapExactAVAXForTokensSupportingFeeOnTransferTokens(
       0,
-      [{to: tokenWithFee.address, from: wmatic.address, stable: true}],
+      [{to: tokenWithFee.address, from: weth.address, stable: true}],
       owner.address,
       99999999999,
       {value: parseUnits('0.1')}
     );
 
-    const maticBalanceAfter = await owner.getBalance();
+    const ethBalanceAfter = await owner.getBalance();
     const tokenBalanceAfter = await tokenWithFee.balanceOf(owner.address);
-    TestHelper.closer(maticBalanceAfter, maticBalance, parseUnits('2'));
+    TestHelper.closer(ethBalanceAfter, ethBalance, parseUnits('2'));
     TestHelper.closer(tokenBalanceAfter, tokenBalance, parseUnits('0.1'));
   });
 
-  it("swapExactTokensForMATICSupportingFeeOnTransferTokens test", async function () {
+  it("swapExactTokensForAVAXSupportingFeeOnTransferTokens test", async function () {
     await tokenWithFee.approve(router.address, parseUnits('10'));
 
-    await router.addLiquidityMATIC(
+    await router.addLiquidityAVAX(
       tokenWithFee.address,
       true,
       parseUnits('1'),
@@ -458,20 +458,20 @@ describe("router tests", function () {
       {value: parseUnits('1')}
     );
 
-    const maticBalance = await owner.getBalance();
+    const ethBalance = await owner.getBalance();
     const tokenBalance = await tokenWithFee.balanceOf(owner.address);
 
-    await router.swapExactTokensForMATICSupportingFeeOnTransferTokens(
+    await router.swapExactTokensForAVAXSupportingFeeOnTransferTokens(
       parseUnits('0.1'),
       0,
-      [{from: tokenWithFee.address, to: wmatic.address, stable: true}],
+      [{from: tokenWithFee.address, to: weth.address, stable: true}],
       owner.address,
       99999999999,
     );
 
-    const maticBalanceAfter = await owner.getBalance();
+    const ethBalanceAfter = await owner.getBalance();
     const tokenBalanceAfter = await tokenWithFee.balanceOf(owner.address);
-    TestHelper.closer(maticBalanceAfter, maticBalance, parseUnits('2'));
+    TestHelper.closer(ethBalanceAfter, ethBalance, parseUnits('2'));
     TestHelper.closer(tokenBalanceAfter, tokenBalance, parseUnits('0.2'));
   });
 
@@ -479,13 +479,13 @@ describe("router tests", function () {
     expect(await router.getExactAmountOut(
       parseUnits('0.1'),
       tokenWithFee.address,
-      wmatic.address,
+      weth.address,
       true,
     )).is.eq(0);
 
     await tokenWithFee.approve(router.address, parseUnits('10'));
 
-    await router.addLiquidityMATIC(
+    await router.addLiquidityAVAX(
       tokenWithFee.address,
       true,
       parseUnits('1'),
@@ -499,13 +499,13 @@ describe("router tests", function () {
     expect(await router.getExactAmountOut(
       parseUnits('0.1'),
       tokenWithFee.address,
-      wmatic.address,
+      weth.address,
       true,
     )).is.not.eq(0);
   });
 
   it("deadline reject", async function () {
-    await expect(router.addLiquidityMATIC(
+    await expect(router.addLiquidityAVAX(
       mim.address,
       true,
       parseUnits('1'),
@@ -539,8 +539,8 @@ describe("router tests", function () {
     ))[0]).eq(0);
   });
 
-  it("receive matic not from wmatic reject", async function () {
-    await expect(owner.sendTransaction({value: 1, to: router.address})).revertedWith("FldxRouter: NOT_WMATIC");
+  it("receive eth not from weth reject", async function () {
+    await expect(owner.sendTransaction({value: 1, to: router.address})).revertedWith("FldxRouter: NOT_WAVAX");
   });
 
   it("getReserves", async function () {
@@ -571,14 +571,14 @@ describe("router tests", function () {
 
   it("getAmountsOut with not exist pair", async function () {
     expect((await router.getAmountsOut(0, [{
-      from: wmatic.address,
+      from: weth.address,
       to: mim.address,
       stable: false
     }]))[0]).eq(0);
   });
 
   it("add liquidity amount desired check", async function () {
-    await expect(router.addLiquidityMATIC(
+    await expect(router.addLiquidityAVAX(
       mim.address,
       true,
       parseUnits('1'),
@@ -588,7 +588,7 @@ describe("router tests", function () {
       99999999999,
       {value: parseUnits('10')}
     )).revertedWith('FldxRouter: DESIRED_A_AMOUNT');
-    await expect(router.addLiquidityMATIC(
+    await expect(router.addLiquidityAVAX(
       mim.address,
       true,
       parseUnits('1'),
@@ -607,13 +607,13 @@ describe("router tests", function () {
       router,
       owner,
       mim.address,
-      wmatic.address,
+      weth.address,
       utils.parseUnits('1'),
       utils.parseUnits('1'),
       true
     );
 
-    await expect(router.addLiquidityMATIC(
+    await expect(router.addLiquidityAVAX(
       mim.address,
       true,
       parseUnits('0.037'),
@@ -624,7 +624,7 @@ describe("router tests", function () {
       {value: parseUnits('0.77')}
     )).revertedWith('FldxRouter: INSUFFICIENT_B_AMOUNT');
 
-    await expect(router.addLiquidityMATIC(
+    await expect(router.addLiquidityAVAX(
       mim.address,
       true,
       parseUnits('0.037'),
@@ -637,20 +637,20 @@ describe("router tests", function () {
   });
 
 
-  it("addLiquidityMATIC send back dust", async function () {
+  it("addLiquidityAVAX send back dust", async function () {
     await TestHelper.addLiquidity(
       factory,
       router,
       owner,
       mim.address,
-      wmatic.address,
+      weth.address,
       utils.parseUnits('1'),
       utils.parseUnits('1'),
       true
     );
 
     await mim.approve(router.address, parseUnits('10'));
-    await router.addLiquidityMATIC(
+    await router.addLiquidityAVAX(
       mim.address,
       true,
       parseUnits('1'),
@@ -665,7 +665,7 @@ describe("router tests", function () {
 
   it("remove Liquidity IA test", async function () {
     await mim.approve(router.address, parseUnits('1'));
-    await router.addLiquidityMATIC(
+    await router.addLiquidityAVAX(
       mim.address,
       true,
       parseUnits('1'),
@@ -676,12 +676,12 @@ describe("router tests", function () {
       {value: parseUnits('10')}
     );
 
-    const pairAdr = await factory.getPair(mim.address, wmatic.address, true);
+    const pairAdr = await factory.getPair(mim.address, weth.address, true);
 
     await FldxPair__factory.connect(pairAdr, owner).approve(router.address, parseUnits('1111'));
     await expect(router.removeLiquidity(
       mim.address,
-      wmatic.address,
+      weth.address,
       true,
       parseUnits('0.1'),
       parseUnits('0.1'),
@@ -691,7 +691,7 @@ describe("router tests", function () {
     )).revertedWith('FldxRouter: INSUFFICIENT_A_AMOUNT');
     await expect(router.removeLiquidity(
       mim.address,
-      wmatic.address,
+      weth.address,
       true,
       parseUnits('0.1'),
       0,
@@ -701,9 +701,9 @@ describe("router tests", function () {
     )).revertedWith('FldxRouter: INSUFFICIENT_B_AMOUNT');
   });
 
-  it("removeLiquidityMATICSupportingFeeOnTransferTokens test", async function () {
+  it("removeLiquidityAVAXSupportingFeeOnTransferTokens test", async function () {
     await tokenWithFee.approve(router.address, parseUnits('1'));
-    await router.addLiquidityMATIC(
+    await router.addLiquidityAVAX(
       tokenWithFee.address,
       true,
       parseUnits('1'),
@@ -714,10 +714,10 @@ describe("router tests", function () {
       {value: parseUnits('10')}
     );
 
-    const pairAdr = await factory.getPair(tokenWithFee.address, wmatic.address, true);
+    const pairAdr = await factory.getPair(tokenWithFee.address, weth.address, true);
 
     await FldxPair__factory.connect(pairAdr, owner).approve(router.address, parseUnits('1111'));
-    await router.removeLiquidityMATICSupportingFeeOnTransferTokens(
+    await router.removeLiquidityAVAXSupportingFeeOnTransferTokens(
       tokenWithFee.address,
       true,
       parseUnits('0.1'),
@@ -733,7 +733,7 @@ describe("router tests", function () {
       parseUnits('0.1'),
       parseUnits('0.1'),
       mim.address,
-      wmatic.address,
+      weth.address,
       true,
       owner.address,
       BigNumber.from('999999999999999999'),
@@ -746,7 +746,7 @@ describe("router tests", function () {
       parseUnits('0.1'),
       [{
         from: mim.address,
-        to: wmatic.address,
+        to: weth.address,
         stable: true
       }],
       owner.address,
@@ -755,12 +755,12 @@ describe("router tests", function () {
   });
 
 
-  it("swapExactMATICForTokens IOA test", async function () {
-    await expect(router.swapExactMATICForTokens(
+  it("swapExactAVAXForTokens IOA test", async function () {
+    await expect(router.swapExactAVAXForTokens(
       parseUnits('0.1'),
       [{
         to: mim.address,
-        from: wmatic.address,
+        from: weth.address,
         stable: true
       }],
       owner.address,
@@ -768,12 +768,12 @@ describe("router tests", function () {
     )).revertedWith('FldxRouter: INSUFFICIENT_OUTPUT_AMOUNT');
   });
 
-  it("swapExactMATICForTokens IP test", async function () {
-    await expect(router.swapExactMATICForTokens(
+  it("swapExactAVAXForTokens IP test", async function () {
+    await expect(router.swapExactAVAXForTokens(
       parseUnits('0.1'),
       [{
         from: mim.address,
-        to: wmatic.address,
+        to: weth.address,
         stable: true
       }],
       owner.address,
@@ -781,13 +781,13 @@ describe("router tests", function () {
     )).revertedWith('FldxRouter: INVALID_PATH');
   });
 
-  it("swapExactTokensForMATIC IOA test", async function () {
-    await expect(router.swapExactTokensForMATIC(
+  it("swapExactTokensForAVAX IOA test", async function () {
+    await expect(router.swapExactTokensForAVAX(
       parseUnits('0.1'),
       parseUnits('0.1'),
       [{
         from: mim.address,
-        to: wmatic.address,
+        to: weth.address,
         stable: true
       }],
       owner.address,
@@ -795,13 +795,13 @@ describe("router tests", function () {
     )).revertedWith('FldxRouter: INSUFFICIENT_OUTPUT_AMOUNT');
   });
 
-  it("swapExactTokensForMATIC IP test", async function () {
-    await expect(router.swapExactTokensForMATIC(
+  it("swapExactTokensForAVAX IP test", async function () {
+    await expect(router.swapExactTokensForAVAX(
       parseUnits('0.1'),
       parseUnits('0.1'),
       [{
         to: mim.address,
-        from: wmatic.address,
+        from: weth.address,
         stable: true
       }],
       owner.address,
@@ -811,7 +811,7 @@ describe("router tests", function () {
 
   it("swapExactTokensForTokensSupportingFeeOnTransferTokens IOA test", async function () {
     await tokenWithFee.approve(router.address, parseUnits('1'));
-    await router.addLiquidityMATIC(
+    await router.addLiquidityAVAX(
       tokenWithFee.address,
       true,
       parseUnits('1'),
@@ -822,13 +822,13 @@ describe("router tests", function () {
       {value: parseUnits('10')}
     );
 
-    await wmatic.approve(router.address, parseUnits('1000'));
+    await weth.approve(router.address, parseUnits('1000'));
     await expect(router.swapExactTokensForTokensSupportingFeeOnTransferTokens(
       parseUnits('0.1'),
       parseUnits('0.1'),
       [{
         to: tokenWithFee.address,
-        from: wmatic.address,
+        from: weth.address,
         stable: true
       }],
       owner.address,
@@ -836,9 +836,9 @@ describe("router tests", function () {
     )).revertedWith('FldxRouter: INSUFFICIENT_OUTPUT_AMOUNT');
   });
 
-  it("swapExactMATICForTokensSupportingFeeOnTransferTokens IP test", async function () {
+  it("swapExactAVAXForTokensSupportingFeeOnTransferTokens IP test", async function () {
     await tokenWithFee.approve(router.address, parseUnits('1'));
-    await router.addLiquidityMATIC(
+    await router.addLiquidityAVAX(
       tokenWithFee.address,
       true,
       parseUnits('1'),
@@ -849,12 +849,12 @@ describe("router tests", function () {
       {value: parseUnits('10')}
     );
 
-    await wmatic.approve(router.address, parseUnits('1000'));
-    await expect(router.swapExactMATICForTokensSupportingFeeOnTransferTokens(
+    await weth.approve(router.address, parseUnits('1000'));
+    await expect(router.swapExactAVAXForTokensSupportingFeeOnTransferTokens(
       parseUnits('0.1'),
       [{
         from: tokenWithFee.address,
-        to: wmatic.address,
+        to: weth.address,
         stable: true
       }],
       owner.address,
@@ -863,9 +863,9 @@ describe("router tests", function () {
     )).revertedWith('FldxRouter: INVALID_PATH');
   });
 
-  it("swapExactMATICForTokensSupportingFeeOnTransferTokens IOA test", async function () {
+  it("swapExactAVAXForTokensSupportingFeeOnTransferTokens IOA test", async function () {
     await tokenWithFee.approve(router.address, parseUnits('1'));
-    await router.addLiquidityMATIC(
+    await router.addLiquidityAVAX(
       tokenWithFee.address,
       true,
       parseUnits('1'),
@@ -876,12 +876,12 @@ describe("router tests", function () {
       {value: parseUnits('10')}
     );
 
-    await wmatic.approve(router.address, parseUnits('1000'));
-    await expect(router.swapExactMATICForTokensSupportingFeeOnTransferTokens(
+    await weth.approve(router.address, parseUnits('1000'));
+    await expect(router.swapExactAVAXForTokensSupportingFeeOnTransferTokens(
       parseUnits('0.1'),
       [{
         to: tokenWithFee.address,
-        from: wmatic.address,
+        from: weth.address,
         stable: true
       }],
       owner.address,
@@ -890,9 +890,9 @@ describe("router tests", function () {
     )).revertedWith('FldxRouter: INSUFFICIENT_OUTPUT_AMOUNT');
   });
 
-  it("swapExactTokensForMATICSupportingFeeOnTransferTokens IOA test", async function () {
+  it("swapExactTokensForAVAXSupportingFeeOnTransferTokens IOA test", async function () {
     await tokenWithFee.approve(router.address, parseUnits('100'));
-    await router.addLiquidityMATIC(
+    await router.addLiquidityAVAX(
       tokenWithFee.address,
       true,
       parseUnits('1'),
@@ -903,13 +903,13 @@ describe("router tests", function () {
       {value: parseUnits('1')}
     );
 
-    await wmatic.approve(router.address, parseUnits('1000'));
-    await expect(router.swapExactTokensForMATICSupportingFeeOnTransferTokens(
+    await weth.approve(router.address, parseUnits('1000'));
+    await expect(router.swapExactTokensForAVAXSupportingFeeOnTransferTokens(
       parseUnits('0.1'),
       parseUnits('0.1'),
       [{
         from: tokenWithFee.address,
-        to: wmatic.address,
+        to: weth.address,
         stable: true
       }],
       owner.address,
@@ -917,9 +917,9 @@ describe("router tests", function () {
     )).revertedWith('FldxRouter: INSUFFICIENT_OUTPUT_AMOUNT');
   });
 
-  it("swapExactTokensForMATICSupportingFeeOnTransferTokens IP test", async function () {
+  it("swapExactTokensForAVAXSupportingFeeOnTransferTokens IP test", async function () {
     await tokenWithFee.approve(router.address, parseUnits('100'));
-    await router.addLiquidityMATIC(
+    await router.addLiquidityAVAX(
       tokenWithFee.address,
       true,
       parseUnits('1'),
@@ -930,13 +930,13 @@ describe("router tests", function () {
       {value: parseUnits('1')}
     );
 
-    await wmatic.approve(router.address, parseUnits('1000'));
-    await expect(router.swapExactTokensForMATICSupportingFeeOnTransferTokens(
+    await weth.approve(router.address, parseUnits('1000'));
+    await expect(router.swapExactTokensForAVAXSupportingFeeOnTransferTokens(
       parseUnits('0.1'),
       parseUnits('0.1'),
       [{
         to: tokenWithFee.address,
-        from: wmatic.address,
+        from: weth.address,
         stable: true
       }],
       owner.address,
@@ -944,13 +944,13 @@ describe("router tests", function () {
     )).revertedWith('FldxRouter: INVALID_PATH');
   });
 
-  it("router with broken matic should revert", async function () {
-    const brokenMatic = await Deploy.deployContract(owner, 'BrokenWMATIC', 'WMATIC', 'WMATIC', 18, owner.address)
-    const routerWithBrokenMatic = await Deploy.deployFldxRouter01(owner, factory.address, brokenMatic.address);
+  it("router with broken eth should revert", async function () {
+    const brokenEth = await Deploy.deployContract(owner, 'BrokenWAVAX', 'WAVAX', 'WAVAX', 18, owner.address)
+    const routerWithBrokenEth = await Deploy.deployFldxRouter01(owner, factory.address, brokenEth.address);
 
-    await mim.approve(routerWithBrokenMatic.address, parseUnits('10'));
+    await mim.approve(routerWithBrokenEth.address, parseUnits('10'));
 
-    await routerWithBrokenMatic.addLiquidityMATIC(
+    await routerWithBrokenEth.addLiquidityAVAX(
       mim.address,
       true,
       parseUnits('1'),
@@ -961,18 +961,18 @@ describe("router tests", function () {
       {value: parseUnits('1')}
     );
 
-    await mim.approve(routerWithBrokenMatic.address, parseUnits('1000'));
-    await expect(routerWithBrokenMatic.swapExactTokensForMATIC(
+    await mim.approve(routerWithBrokenEth.address, parseUnits('1000'));
+    await expect(routerWithBrokenEth.swapExactTokensForAVAX(
       parseUnits('0.01'),
       0,
       [{
-        to: brokenMatic.address,
+        to: brokenEth.address,
         from: mim.address,
         stable: true,
       }],
       owner.address,
       99999999999
-    )).revertedWith('FldxRouter: ETH_TRANSFER_FAILED');
+    )).revertedWith('FldxRouter: AVAX_TRANSFER_FAILED');
   });
 
 });

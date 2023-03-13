@@ -18,10 +18,13 @@ import {
   FldxFactory,
   FldxMinter,
   FldxRouter01,
-  FldxVoter
+  FldxVoter, MerkleClaim, MerkleVeNFTClaim
 } from "../../typechain";
 import {Misc} from "../Misc";
 import {CoreAddresses} from "./CoreAddresses";
+import fs from "fs";
+import {Addresses} from "../addresses/Addresses";
+import {sign} from "crypto";
 
 const log: Logger = new Logger(logSettings);
 
@@ -105,17 +108,20 @@ export class Deploy {
     return (await Deploy.deployContract(signer, 'FldxRouter01', factory, networkToken)) as FldxRouter01;
   }
 
-  public static async deployLibrary(
-      signer: SignerWithAddress,
-      router: string,
-  ) {
+  public static async deployLibrary(signer: SignerWithAddress, router: string) {
     return (await Deploy.deployContract(signer, 'SwapLibrary', router)) as SwapLibrary;
   }
 
-  public static async deployMultiCall(
-      signer: SignerWithAddress
-  ) {
+  public static async deployMultiCall(signer: SignerWithAddress) {
     return (await Deploy.deployContract(signer, 'Multicall2')) as Multicall2;
+  }
+
+  public static async deployMerkleClaim(signer: SignerWithAddress, fldx: string, root: string) {
+    return (await Deploy.deployContract(signer, 'MerkleClaim', fldx, root)) as MerkleClaim;
+  }
+
+  public static async deployMerkleVeNFTClaim(signer: SignerWithAddress, fldx: string, ve: string, root: string) {
+    return (await Deploy.deployContract(signer, 'MerkleVeNFTClaim', fldx, ve, root)) as MerkleVeNFTClaim;
   }
 
   public static async deployVe(signer: SignerWithAddress, token: string, controller: string) {
@@ -146,15 +152,13 @@ export class Deploy {
   public static async deployFldxMinter(
     signer: SignerWithAddress,
     ve: string,
-    controller: string,
-    warmingUpPeriod: number
+    controller: string
   ) {
     return (await Deploy.deployContract(
       signer,
       'FldxMinter',
       ve,
-      controller,
-      warmingUpPeriod,
+      controller
     )) as FldxMinter;
   }
 
@@ -162,9 +166,6 @@ export class Deploy {
     signer: SignerWithAddress,
     networkToken: string,
     voterTokens: string[],
-    minterClaimants: string[],
-    minterClaimantsAmounts: BigNumber[],
-    minterSum: BigNumber,
     warmingUpPeriod = 2
   ) {
     const [baseFactory, router, treasury] = await Deploy.deployDex(signer, networkToken);
@@ -182,9 +183,6 @@ export class Deploy {
       signer,
       networkToken,
       voterTokens,
-      minterClaimants,
-      minterClaimantsAmounts,
-      minterSum,
       baseFactory.address,
       warmingUpPeriod,
     );
@@ -221,36 +219,36 @@ export class Deploy {
     signer: SignerWithAddress,
     networkToken: string,
     voterTokens: string[],
-    minterClaimants: string[],
-    minterClaimantsAmounts: BigNumber[],
-    minterSum: BigNumber,
     baseFactory: string,
     warmingUpPeriod: number,
   ) {
     const controller = await Deploy.deployContract(signer, 'Controller') as Controller;
     const token = await Deploy.deployFldx(signer);
+    // premint liquidity + team tokens + marketing + advisors + unallocated community tokens
+    // 20M + 10M + 4M + 1M + 13M
+    await Misc.runAndWait(() => token.mint(signer.address, '48000000000000000000000000'))
+
     const ve = await Deploy.deployVe(signer, token.address, controller.address);
     const gaugesFactory = await Deploy.deployGaugeFactory(signer);
     const bribesFactory = await Deploy.deployBribeFactory(signer);
 
-    await Misc.runAndWait(() => token.mint(signer.address,"1000000000000000000000"));
-
     const veDist = await Deploy.deployVeDist(signer, ve.address);
     const voter = await Deploy.deployFldxVoter(signer, ve.address, baseFactory, gaugesFactory.address, bribesFactory.address);
 
-    const minter = await Deploy.deployFldxMinter(signer, ve.address, controller.address, warmingUpPeriod);
+    const minter = await Deploy.deployFldxMinter(signer, ve.address, controller.address);
 
+    const merkleClaim = await Deploy.deployMerkleClaim(signer, token.address, Addresses.merkleRoot);
+    const merkleVeNFTClaim = await Deploy.deployMerkleVeNFTClaim(signer, token.address, ve.address,
+        Addresses.veNFTMerkleRoot);
+
+    await Misc.runAndWait(() => token.setMerkleClaim(merkleClaim.address));
+    await Misc.runAndWait(() => token.setMerkleNFTClaim(merkleVeNFTClaim.address));
     await Misc.runAndWait(() => token.setMinter(minter.address));
     await Misc.runAndWait(() => veDist.setDepositor(minter.address));
     await Misc.runAndWait(() => controller.setVeDist(veDist.address));
     await Misc.runAndWait(() => controller.setVoter(voter.address));
 
     await Misc.runAndWait(() => voter.initialize(voterTokens, minter.address));
-    await Misc.runAndWait(() => minter.initialize(
-      minterClaimants,
-      minterClaimantsAmounts,
-      minterSum
-    ));
 
     return [
       controller,

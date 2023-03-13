@@ -8,9 +8,20 @@ import "./FldxPair.sol";
 contract FldxFactory is IFactory {
 
   bool public override isPaused;
-  address public pauser;
-  address public pendingPauser;
+  address public admin;
+  address public pendingAdmin;
+  address public partnerSetter;
   address public immutable override treasury;
+
+  uint256 public stableFee = 2;
+  uint256 public volatileFee = 20;
+  uint256 public constant treasuryFee = 10;
+  uint256 public constant partnerFee = 3;
+
+  /// @dev 0.4% max volatile swap fees
+  uint internal constant MAX_VOLATILE_SWAP_FEE = 40;
+  /// @dev 0.1% max stable swap fee
+  uint internal constant MAX_STABLE_SWAP_FEE = 10;
 
   mapping(address => mapping(address => mapping(bool => address))) public override getPair;
   address[] public allPairs;
@@ -30,28 +41,55 @@ contract FldxFactory is IFactory {
   );
 
   constructor(address _treasury) {
-    pauser = msg.sender;
+    admin = msg.sender;
     isPaused = false;
     treasury = _treasury;
+    partnerSetter = msg.sender;
   }
 
   function allPairsLength() external view returns (uint) {
     return allPairs.length;
   }
 
-  function setPauser(address _pauser) external {
-    require(msg.sender == pauser, "FldxFactory: Not pauser");
-    pendingPauser = _pauser;
+  function setAdmin(address _admin) external {
+    require(msg.sender == admin, "FldxFactory: Not Admin");
+    pendingAdmin = _admin;
   }
 
-  function acceptPauser() external {
-    require(msg.sender == pendingPauser, "FldxFactory: Not pending pauser");
-    pauser = pendingPauser;
+  function acceptAdmin() external {
+    require(msg.sender == pendingAdmin, "FldxFactory: Not pending admin");
+    admin = pendingAdmin;
+  }
+
+  function setPartnerSetter(address _partnerSetter) external {
+    require(msg.sender == admin, "FldxFactory: Not admin");
+    partnerSetter = _partnerSetter;
   }
 
   function setPause(bool _state) external {
-    require(msg.sender == pauser, "FldxFactory: Not pauser");
+    require(msg.sender == admin, "FldxFactory: Not admin");
     isPaused = _state;
+  }
+
+  function setFee(bool _stable, uint256 _fee) external {
+    require(msg.sender == admin, 'not admin');
+    require(_fee != 0, 'fee must be nonzero');
+
+    if (_stable) {
+      require(_fee <= MAX_STABLE_SWAP_FEE, 'fee too high');
+      stableFee = _fee;
+    } else {
+      require(_fee <= MAX_VOLATILE_SWAP_FEE, 'fee too high');
+      volatileFee = _fee;
+    }
+  }
+
+  function getFees(bool _stable) external view returns (uint) {
+    if (_stable) {
+      return stableFee;
+    } else {
+      return volatileFee;
+    }
   }
 
   function pairCodeHash() external pure override returns (bytes32) {
