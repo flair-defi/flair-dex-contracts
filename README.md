@@ -1,1 +1,1 @@
-Smart Contracts for Flares Dex
+Smart Contracts for Flair Dex
