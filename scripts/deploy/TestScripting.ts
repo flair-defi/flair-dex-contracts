@@ -56,7 +56,7 @@ async function addLiquidityMATIC() {
 
     const Token = await ethers.getContractFactory("Token");
     const mim = await Token.attach("0x49eBd4a0b8a4D498CA9b30Ee94111306cd71ac04");
-    await Misc.runAndWait(() => router.addLiquidityMATIC(mim.address,
+    await Misc.runAndWait(() => router.addLiquidityAVAX(mim.address,
         true,
         "100000000000000000000",
         "98000000000000000000",
