@@ -13,10 +13,10 @@ contract FldxFactory is IFactory {
   address public partnerSetter;
   address public immutable override treasury;
 
-  uint256 public stableFee = 2;
-  uint256 public volatileFee = 20;
-  uint256 public constant treasuryFee = 10;
-  uint256 public constant partnerFee = 3;
+  uint256 public stableFee;
+  uint256 public volatileFee;
+  uint256 public constant treasuryFee;
+  uint256 public constant partnerFee;
 
   /// @dev 0.4% max volatile swap fees
   uint internal constant MAX_VOLATILE_SWAP_FEE = 40;
@@ -45,6 +45,10 @@ contract FldxFactory is IFactory {
     isPaused = false;
     treasury = _treasury;
     partnerSetter = msg.sender;
+    stableFee = 2;
+    volatileFee = 20;
+    treasuryFee = 10;
+    partnerFee = 3;
   }
 
   function allPairsLength() external view returns (uint) {

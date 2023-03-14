@@ -20,7 +20,6 @@ contract Fldx is IERC20 {
 
   constructor() {
     minter = msg.sender;
-    _mint(msg.sender, 0);
   }
 
   // No checks as its meant to be once off to set minting rights to Minter

@@ -399,7 +399,7 @@ contract FldxRouter01 {
     bool stable,
     uint liquidity,
     uint amountTokenMin,
-    uint amountFTMMin,
+    uint amountAVAXMin,
     address to,
     uint deadline
   ) external returns (uint amountToken, uint amountFTM) {
@@ -408,7 +408,7 @@ contract FldxRouter01 {
       stable,
       liquidity,
       amountTokenMin,
-      amountFTMMin,
+      amountAVAXMin,
       to,
       deadline
     );
@@ -419,7 +419,7 @@ contract FldxRouter01 {
     bool stable,
     uint liquidity,
     uint amountTokenMin,
-    uint amountFTMMin,
+    uint amountAVAXMin,
     address to,
     uint deadline
   ) internal ensure(deadline) returns (uint amountToken, uint amountFTM) {
@@ -429,7 +429,7 @@ contract FldxRouter01 {
       stable,
       liquidity,
       amountTokenMin,
-      amountFTMMin,
+      amountAVAXMin,
       address(this),
       deadline
     );
@@ -443,7 +443,7 @@ contract FldxRouter01 {
     bool stable,
     uint liquidity,
     uint amountTokenMin,
-    uint amountFTMMin,
+    uint amountAVAXMin,
     address to,
     uint deadline,
     bool approveMax, uint8 v, bytes32 r, bytes32 s
@@ -452,7 +452,7 @@ contract FldxRouter01 {
     uint value = approveMax ? type(uint).max : liquidity;
     IPair(pair).permit(msg.sender, address(this), value, deadline, v, r, s);
     (amountToken, amountFTM) = _removeLiquidityAVAXSupportingFeeOnTransferTokens(
-      token, stable, liquidity, amountTokenMin, amountFTMMin, to, deadline
+      token, stable, liquidity, amountTokenMin, amountAVAXMin, to, deadline
     );
   }
 
