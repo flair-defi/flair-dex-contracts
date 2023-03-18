@@ -15,8 +15,8 @@ contract FldxFactory is IFactory {
 
   uint256 public stableFee;
   uint256 public volatileFee;
-  uint256 public constant treasuryFee;
-  uint256 public constant partnerFee;
+  uint256 public constant treasuryFee = 10;
+  uint256 public constant partnerFee = 3;
 
   /// @dev 0.4% max volatile swap fees
   uint internal constant MAX_VOLATILE_SWAP_FEE = 40;
@@ -47,8 +47,6 @@ contract FldxFactory is IFactory {
     partnerSetter = msg.sender;
     stableFee = 2;
     volatileFee = 20;
-    treasuryFee = 10;
-    partnerFee = 3;
   }
 
   function allPairsLength() external view returns (uint) {
