@@ -19,6 +19,8 @@ contract MerkleClaim {
 
     /// @notice Mapping of addresses who have claimed tokens
     mapping(address => bool) public hasClaimed;
+    address internal admin;
+    bool public claimEnabled;
 
     /// ============ Constructor ============
 
@@ -28,6 +30,7 @@ contract MerkleClaim {
     constructor(address _fldx, bytes32 _merkleRoot) {
         fldx = IFLDX(_fldx);
         merkleRoot = _merkleRoot;
+        admin = msg.sender;
     }
 
     /// ============ Events ============
@@ -39,6 +42,12 @@ contract MerkleClaim {
 
     /// ============ Functions ============
 
+    function setClaimEnabled() {
+        require(msg.sender == admin, 'NOT_ADMIN');
+        claimEnabled = true;
+        admin = address(0);
+    }
+
     /// @notice Allows claiming tokens if address is part of merkle tree
     /// @param to address of claimee
     /// @param amount of tokens owed to claimee
@@ -48,6 +57,7 @@ contract MerkleClaim {
         uint256 amount,
         bytes32[] calldata proof
     ) external {
+        require(claimEnabled == true, 'CLAIM_NOT_ENABLED');
         // Throw if address has already claimed tokens
         require(!hasClaimed[to], "ALREADY_CLAIMED");
 

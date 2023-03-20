@@ -21,6 +21,8 @@ contract MerkleVeNFTClaim {
 
     /// @notice Mapping of addresses who have claimed tokens
     mapping(address => bool) public hasClaimed;
+    address internal admin;
+    bool public claimEnabled;
 
     /// ============ Constructor ============
 
@@ -31,9 +33,16 @@ contract MerkleVeNFTClaim {
         fldx = IFLDX(_fldx);
         merkleRoot = _merkleRoot;
         ve = IVe(_ve);
+        admin = msg.sender;
     }
 
     /// ============ Functions ============
+
+    function setClaimEnabled() {
+        require(msg.sender == admin, 'NOT_ADMIN');
+        claimEnabled = true;
+        admin = address(0);
+    }
 
     /// @notice Allows claiming tokens if address is part of merkle tree
     /// @param to address of claimee
@@ -46,6 +55,7 @@ contract MerkleVeNFTClaim {
         uint256 lockedDuration,
         bytes32[] calldata proof
     ) external {
+        require(claimEnabled == true, 'CLAIM_NOT_ENABLED');
         // Throw if address has already claimed tokens
         require(!hasClaimed[to], "ALREADY_CLAIMED");
 
