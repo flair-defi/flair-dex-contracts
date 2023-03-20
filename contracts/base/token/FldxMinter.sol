@@ -23,13 +23,13 @@ contract FldxMinter is IMinter {
   uint internal constant PRECISION = 10000;
 
   /// @dev Weekly emission threshold for the end game. 2% of circulation supply.
-  uint internal constant _TAIL_EMISSION = 2;
+  uint internal constant _TAIL_EMISSION = 200;
 
-  /// @dev Treasury Emission.
-  uint internal constant _TREASURY_EMISSION = 3;
+  /// @dev Treasury Emission. 3% of emissions
+  uint internal constant _TREASURY_EMISSION = 300;
 
-  /// @dev NFT Stakers Emission.
-  uint internal constant _NFT_STAKERS_EMISSION = 2;
+  /// @dev NFT Stakers Emission. 2% of emissions
+  uint internal constant _NFT_STAKERS_EMISSION = 200;
 
   /// @dev The core parameter for determinate the whole emission dynamic.
   ///       Will be decreased every week.
@@ -50,7 +50,7 @@ contract FldxMinter is IMinter {
   address public pendingTreasury;
   address public nftStakingContract;
 
-  address internal initializer;
+  address public initializer;
 
   event Mint(
     address indexed sender,
@@ -72,7 +72,7 @@ contract FldxMinter is IMinter {
     nftStakingContract = msg.sender;
     weeklyEmissionDecrease = 9900;
     baseWeeklyEmission = _START_BASE_WEEKLY_EMISSION;
-    activePeriod = (block.timestamp + _WEEK) / _WEEK * _WEEK;
+    activePeriod = (block.timestamp) / _WEEK * _WEEK;
   }
 
   function setTreasury(address _treasury) external {
@@ -188,6 +188,8 @@ contract FldxMinter is IMinter {
         token.mint(address(this), _required - _balanceOf);
       }
 
+      IERC20(address(token)).safeTransfer(treasury, _treasury);
+      IERC20(address(token)).safeTransfer(nftStakingContract, _nftstakers);
       IERC20(address(token)).safeTransfer(address(_veDist()), _growth);
       // checkpoint token balance that was just minted in veDist
       _veDist().checkpointToken();
@@ -196,9 +198,6 @@ contract FldxMinter is IMinter {
 
       token.approve(address(_voter()), _weekly);
       _voter().notifyRewardAmount(_weekly);
-
-      IERC20(address(token)).safeTransfer(treasury, _treasury);
-      IERC20(address(token)).safeTransfer(nftStakingContract, _nftstakers);
 
       emit Mint(msg.sender, _weekly, _growth, _circulatingSupply(), _circulatingEmission());
     }

@@ -140,8 +140,8 @@ describe("emission tests", function () {
     expect(await core.token.balanceOf(core.voter.address)).is.eq(0);
   });
 
-  it("update period 5 weeks", async function () {
-    await TimeUtils.advanceBlocksOnTs(WEEK * 2);
+  it("update period 4 weeks", async function () {
+    await TimeUtils.advanceBlocksOnTs(WEEK);
     expect(await core.token.balanceOf(core.minter.address)).is.eq(0);
     expect(await core.token.balanceOf(core.veDist.address)).is.eq(0);
     expect(await core.token.balanceOf(core.voter.address)).is.eq(0);
@@ -149,10 +149,12 @@ describe("emission tests", function () {
     await core.minter.updatePeriod();
     expect(await core.token.balanceOf(core.minter.address)).is.eq(0);
 
-    TestHelper.closer(await core.token.balanceOf(core.veDist.address), BigNumber.from('160000000'),
-        BigNumber.from('40000000'));
     TestHelper.closer(await core.token.balanceOf(core.voter.address), parseUnits('5000000'),
         parseUnits('0'));
+
+    TestHelper.closer(await core.token.balanceOf(core.veDist.address), BigNumber.from('160000000'),
+        BigNumber.from('40000000'));
+
 
     await TimeUtils.advanceBlocksOnTs(WEEK);
     await core.minter.updatePeriod();
@@ -172,7 +174,7 @@ describe("emission tests", function () {
   });
 
   it("update period twice", async function () {
-    await TimeUtils.advanceBlocksOnTs(WEEK * 2);
+    await TimeUtils.advanceBlocksOnTs(WEEK * 1);
     expect(await core.token.balanceOf(core.minter.address)).is.eq(0);
     expect(await core.token.balanceOf(core.veDist.address)).is.eq(0);
     expect(await core.token.balanceOf(core.voter.address)).is.eq(0);

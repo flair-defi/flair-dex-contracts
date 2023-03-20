@@ -38,7 +38,7 @@ contract MerkleVeNFTClaim {
 
     /// ============ Functions ============
 
-    function setClaimEnabled() {
+    function setClaimEnabled() external {
         require(msg.sender == admin, 'NOT_ADMIN');
         claimEnabled = true;
         admin = address(0);
