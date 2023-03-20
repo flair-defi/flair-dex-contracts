@@ -168,8 +168,8 @@ contract FldxPair is IERC20, IPair, Reentrancy {
 
   /// @dev Accrue fees on token0
   function _update0(uint amount) internal {
-    uint toTreasury = (amount * IFactory(factory).treasuryFee()) / 10000;
-    uint toPartner = (amount * IFactory(factory).partnerFee()) / 10000;
+    uint toTreasury = (amount * IFactory(factory).treasuryFee()) / 100;
+    uint toPartner = (amount * IFactory(factory).partnerFee()) / 100;
     uint toFees = amount - toTreasury - toPartner;
 
     // transfer the fees out to PairFees and Treasury
@@ -188,8 +188,8 @@ contract FldxPair is IERC20, IPair, Reentrancy {
 
   /// @dev Accrue fees on token1
   function _update1(uint amount) internal {
-    uint toTreasury = (amount * IFactory(factory).treasuryFee()) / 10000;
-    uint toPartner = (amount * IFactory(factory).partnerFee()) / 10000;
+    uint toTreasury = (amount * IFactory(factory).treasuryFee()) / 100;
+    uint toPartner = (amount * IFactory(factory).partnerFee()) / 100;
     uint toFees = amount - toTreasury - toPartner;
 
     IERC20(token1).safeTransfer(treasury, toTreasury);
