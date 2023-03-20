@@ -50,8 +50,6 @@ contract FldxMinter is IMinter {
   address public pendingTreasury;
   address public nftStakingContract;
 
-  address public initializer;
-
   event Mint(
     address indexed sender,
     uint weekly,
@@ -64,7 +62,6 @@ contract FldxMinter is IMinter {
     address ve_, // the ve(3,3) system that will be locked into
     address controller_ // controller with veDist and voter addresses
   ) {
-    initializer = msg.sender;
     token = IUnderlying(IVe(ve_).token());
     ve = IVe(ve_);
     controller = controller_;
@@ -86,7 +83,7 @@ contract FldxMinter is IMinter {
   }
 
   function setNftStakingContract(address _nftStakingContract) external {
-    require(msg.sender == initializer, "Not initializer");
+    require(msg.sender == treasury, "Not treasury");
     nftStakingContract = _nftStakingContract;
   }
 
@@ -153,11 +150,9 @@ contract FldxMinter is IMinter {
 
   /// @dev Update period can only be called once per cycle (1 week)
   function updatePeriod() external override returns (uint) {
-    uint _period = activePeriod;
     // only trigger if new week
-    if (block.timestamp >= _period + _WEEK) {
-      _period = block.timestamp / _WEEK * _WEEK;
-      activePeriod = _period;
+    if (block.timestamp >= activePeriod + _WEEK) {
+      activePeriod = block.timestamp / _WEEK * _WEEK;
       uint _weekly = _weeklyEmission();
       // slightly decrease weekly emission
       baseWeeklyEmission = baseWeeklyEmission
@@ -201,7 +196,7 @@ contract FldxMinter is IMinter {
 
       emit Mint(msg.sender, _weekly, _growth, _circulatingSupply(), _circulatingEmission());
     }
-    return _period;
+    return activePeriod;
   }
 
 }
