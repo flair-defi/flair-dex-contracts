@@ -69,7 +69,7 @@ contract FldxMinter is IMinter {
     nftStakingContract = msg.sender;
     weeklyEmissionDecrease = 9900;
     baseWeeklyEmission = _START_BASE_WEEKLY_EMISSION;
-    activePeriod = (block.timestamp) / _WEEK * _WEEK;
+    activePeriod = (block.timestamp / _WEEK) * _WEEK;
   }
 
   function setTreasury(address _treasury) external {
@@ -152,7 +152,7 @@ contract FldxMinter is IMinter {
   function updatePeriod() external override returns (uint) {
     // only trigger if new week
     if (block.timestamp >= activePeriod + _WEEK) {
-      activePeriod = block.timestamp / _WEEK * _WEEK;
+      activePeriod = (block.timestamp / _WEEK) * _WEEK;
       uint _weekly = _weeklyEmission();
       // slightly decrease weekly emission
       baseWeeklyEmission = baseWeeklyEmission
