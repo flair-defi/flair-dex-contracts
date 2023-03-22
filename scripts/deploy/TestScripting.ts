@@ -66,7 +66,112 @@ async function addLiquidityMATIC() {
     ));
 }
 
-creatUSDCWAVAXPair()
+async function changeFees() {
+    const Factory = await ethers.getContractFactory("FldxFactory");
+    const factory = await Factory.attach("0xC1371d3ed9D6251F20Ab5d107eC6Bc84a6dAE9BE");
+
+    console.log(await factory.getFees(true));
+    // await factory.setFee(false, 15);
+    // console.log(await factory.getFees(false));
+    // console.log(await factory.volatileFee());
+}
+
+
+async function changeAdmin() {
+    const [owner, owner2] = await ethers.getSigners();
+
+    const Factory = await ethers.getContractFactory("FldxFactory");
+    const factory = await Factory.attach("0xC1371d3ed9D6251F20Ab5d107eC6Bc84a6dAE9BE");
+
+    console.log(await factory.admin());
+    await factory.setAdmin(owner2.address);
+    console.log(await factory.pendingAdmin());
+    await factory.connect(owner2).acceptAdmin();
+    console.log(await factory.admin());
+}
+
+async function changePartnerSetter() {
+    const [owner, owner2] = await ethers.getSigners();
+
+    const Factory = await ethers.getContractFactory("FldxFactory");
+    const factory = await Factory.attach("0xC1371d3ed9D6251F20Ab5d107eC6Bc84a6dAE9BE");
+
+    console.log(await factory.partnerSetter());
+    await factory.connect(owner2).setPartnerSetter(owner2.address);
+    console.log(await factory.partnerSetter());
+}
+
+async function changePartner() {
+    const [owner, owner2] = await ethers.getSigners();
+
+    const Pair = await ethers.getContractFactory("FldxPair");
+    const pair = await Pair.attach("0x0ee2266f321dd63e31ab8b35b61242a2a21ccd26");
+
+    console.log(await pair.partner());
+    await pair.connect(owner2).setPartner(owner2.address);
+    console.log(await pair.partner());
+}
+
+async function getFees() {
+    const Treasury = await ethers.getContractFactory("GovernanceTreasury");
+    const treasury = await Treasury.attach("0x15Bf2C85c32B3B4A2C43615a28fA8E4F5a76C88A");
+
+    const USDC = await ethers.getContractFactory('Token');
+    const usdc = await USDC.attach("0x7b233e29721C82A961d816Dec044ccbeF827ea84");
+
+    const USDT = await ethers.getContractFactory('Token');
+    const usdt = await USDT.attach("0x842dB8e9e4465177eEb894Fbd93BA0BBfF62019a");
+
+    console.log(await usdt.balanceOf(treasury.address));
+    console.log(await usdc.balanceOf(treasury.address));
+    console.log(await usdc.balanceOf("0x93FF343f0c00096e25d77BF137339c6dE5A51b5E"))
+
+}
+
+async function claimFees() {
+    const Treasury = await ethers.getContractFactory("GovernanceTreasury");
+    const treasury = await Treasury.attach("0x15Bf2C85c32B3B4A2C43615a28fA8E4F5a76C88A");
+
+    const USDC = await ethers.getContractFactory('Token');
+    const usdc = await USDC.attach("0x7b233e29721C82A961d816Dec044ccbeF827ea84");
+
+    const USDT = await ethers.getContractFactory('Token');
+    const usdt = await USDT.attach("0x842dB8e9e4465177eEb894Fbd93BA0BBfF62019a");
+
+    console.log(await usdt.balanceOf(treasury.address));
+    await treasury.claim(["0x842dB8e9e4465177eEb894Fbd93BA0BBfF62019a"]);
+    console.log(await usdt.balanceOf(treasury.address));
+}
+
+async function tokenUri() {
+    const Ve = await ethers.getContractFactory('Ve');
+    const ve = await Ve.attach('0x62916C826a01D3ebD4b483ea7c84c4815d696948');
+
+    console.log(await ve.tokenURI(1));
+}
+
+async function setMinterTreasury() {
+    const [owner, owner2] = await ethers.getSigners();
+
+    const Minter = await ethers.getContractFactory('FldxMinter');
+    const minter = await Minter.attach('0x2CeCd67143C0df9671107896BB364ccec3bC1714');
+
+    console.log(await minter.treasury());
+    await minter.connect(owner2).setTreasury(owner.address);
+    await minter.connect(owner).acceptTreasury();
+    console.log(await minter.treasury());
+}
+
+async function setNFTContract() {
+    const [owner, owner2] = await ethers.getSigners();
+
+    const Minter = await ethers.getContractFactory('FldxMinter');
+    const minter = await Minter.attach('0x2CeCd67143C0df9671107896BB364ccec3bC1714');
+
+    await minter.connect(owner2).setNftStakingContract(owner.address);
+}
+
+setNFTContract()
     .then(() => process.exit(0))
     .catch(error => {
         console.error(error);
